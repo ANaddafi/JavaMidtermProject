@@ -48,4 +48,14 @@ public class ServerWorker extends Thread{
             e.printStackTrace();
         }
     }
+
+    public void sendRole() throws IOException {
+        String body = this.group.name() + " " + this.type;
+        String toSend = GameServer.MSG + " " + GameServer.SERVER_NAME + " " + body + "\n";
+        outputStream.write(toSend.getBytes());
+    }
+
+    public String getUserName() {
+        return userName;
+    }
 }

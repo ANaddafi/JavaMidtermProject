@@ -23,15 +23,19 @@ public class Client {
 
             outputStream.write((userName + "\n").getBytes());
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
             String line;
-            while((line = reader.readLine()) != null){
-                System.out.println("Server: " + line);
-            }
+            do{
+                line = bufferedReader.readLine();
+            } while (line == null);
+
+            System.out.println("> RECV:" + line);
+            String[] tokens = line.split(" ");
+            System.out.println("Your Group is : " + tokens[2]);
+            System.out.println("Your Type  is : " + tokens[3]);
 
         } catch (IOException e) {
-            System.err.println("Could not connect to server.");
             e.printStackTrace();
         }
     }
