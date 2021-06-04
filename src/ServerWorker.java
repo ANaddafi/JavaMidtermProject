@@ -5,7 +5,9 @@ public class ServerWorker extends Thread{
     private Socket connectionSocket;
     private OutputStream outputStream;
     private InputStream inputStream;
+    private BufferedReader bufferedReader;
 
+    private String userName;
     private Group group;
     private Type type;
 
@@ -32,12 +34,15 @@ public class ServerWorker extends Thread{
             inputStream = connectionSocket.getInputStream();
             outputStream = connectionSocket.getOutputStream();
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
             String line;
-            while((line = reader.readLine()) != null){
-                System.out.println("Client Says: " + line);
-                outputStream.write("Got your Message!\n".getBytes());
-            }
+            do {
+                line = bufferedReader.readLine();
+                // TODO CHECK DUPLICATE USERNAME
+            } while (line == null);
+
+            userName = line;
+            System.out.println("User " + userName + " joined!");
 
         } catch (IOException e) {
             e.printStackTrace();

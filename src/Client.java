@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.Socket;
+import java.util.Scanner;
 
 public class Client {
     private static Socket connectionSocket;
@@ -14,9 +15,16 @@ public class Client {
             inputStream = connectionSocket.getInputStream();
             outputStream = connectionSocket.getOutputStream();
 
-            outputStream.write("Alireza\n".getBytes());
+            System.out.println("Welcome to the game of MAFIA!");
+            System.out.print("Enter your name: ");
+            String userName = new Scanner(System.in).nextLine();
+
+            // TODO CHECK IF NAME IS DUPLICATE
+
+            outputStream.write((userName + "\n").getBytes());
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
             String line;
             while((line = reader.readLine()) != null){
                 System.out.println("Server: " + line);

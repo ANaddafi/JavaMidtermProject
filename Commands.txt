@@ -14,3 +14,7 @@ VOTE
 MSG
     MSG <sender> <body>
     * <sender> may be SERVER, for some situations like answering inspector
+
+ERR
+    ERR
+    * your username has been chosen before
