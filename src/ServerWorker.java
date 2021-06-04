@@ -58,4 +58,14 @@ public class ServerWorker extends Thread{
     public String getUserName() {
         return userName;
     }
+
+    public void wakeUp() throws IOException {
+        isSleep = false;
+        outputStream.write((GameServer.WAKEUP + "\n").getBytes());
+    }
+
+    public void goSleep() throws IOException {
+        isSleep = true;
+        outputStream.write((GameServer.SLEEP + "\n").getBytes());
+    }
 }

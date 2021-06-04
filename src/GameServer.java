@@ -97,16 +97,43 @@ public class GameServer extends Thread{
         waitForLogin();
 
         // Intro (Night #1)
+        System.out.println("INTRO BEGINS");
         for(ServerWorker worker : workers){
             worker.sendRole();
         }
 
-        System.out.println("WAITING...");
-        while (true) {
+        // The day cycle begins
+        System.out.println("DAY CYCLE BEGINS");
+        while(!gameIsFinished()){
+            // DAY
+            System.out.println("IT'S DAY");
+            wakeUpAll();
             Thread.sleep(1000);
+
+            // NIGHT
+            System.out.println("ITS NIGHT");
+            goSleepAll();
         }
 
+        System.out.println("WAITING...");
+        while (true)
+            Thread.sleep(1000);
 
+
+    }
+
+    private void goSleepAll() throws IOException {
+        for(ServerWorker worker : workers)
+            worker.goSleep();
+    }
+
+    private void wakeUpAll() throws IOException {
+        for(ServerWorker worker : workers)
+            worker.wakeUp();
+    }
+
+    private boolean gameIsFinished() {
+        return mafias.isEmpty() || mafias.size() == citizens.size();
     }
 
     private void waitForLogin() throws InterruptedException {
