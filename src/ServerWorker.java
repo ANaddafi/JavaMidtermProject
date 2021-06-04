@@ -1,6 +1,4 @@
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 
 public class ServerWorker extends Thread{
@@ -33,6 +31,14 @@ public class ServerWorker extends Thread{
         try {
             inputStream = connectionSocket.getInputStream();
             outputStream = connectionSocket.getOutputStream();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            String line;
+            while((line = reader.readLine()) != null){
+                System.out.println("Client Says: " + line);
+                outputStream.write("Got your Message!\n".getBytes());
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
