@@ -15,7 +15,16 @@ Citizen
         * He can decide to shoot NO ONE
     4 Mayor -> Can decide to cancel the vote, after it is done
     5 Psycho -> Can decide to MUTE someone for one day
-    6 Strong -> Can ask GOD for the eliminated roles
+    6 Strong -> Can ask GOD for the roles of eliminated players
         * Can do it only TWICE
         * He can survive ONE SHOT
     7 Ordinary Citizen (OrdCity)
+
+Order (for nights)
+    1 Mafias
+    2 Dr.Lector
+    3 Doctor
+    4 Inspector
+    5 Sniper
+    6 Psycho
+    7 Strong

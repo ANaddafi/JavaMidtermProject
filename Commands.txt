@@ -1,0 +1,16 @@
+SLEEP
+    * Stops receiving messages
+        So the thread which is reading should wait (t.wait())
+WAKEUP
+    * Starts receiving messages
+        So the thread which is reading should start (t.notify())
+VOTE
+    Server -> Client : VOTE <vote msg> <vote list> <vote time>
+    Client -> Server : VOTE <int index>
+    * <vote list> should only contain eligible players (alive, doctor not heal him twice, etc.)
+    * for Sniper & Psycho, there must be a 'null' object in list, so he can choose to skip
+    * for Strong, there should be two options : YES or NO (note that he can ask only twice)
+
+MSG
+    MSG <sender> <body>
+    * <sender> may be SERVER, for some situations like answering inspector
