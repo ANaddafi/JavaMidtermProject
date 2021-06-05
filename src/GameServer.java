@@ -21,6 +21,7 @@ public class GameServer extends Thread{
     public static final int TIME_TICK = 1000;
     public static final int DAY_TIME = 5 * 60 * 1000; // should be 5 mins
     public static final int DAY_VOTE_TIME = 30 * 1000; // should be 30 secs
+    public static final int MAYOR_VOTE_TIME = 10 * 1000;
     public static final int MAFIA_TALK_TIME = 30 * 1000;
     public static final int MAFIA_KILL_TIME = 10 * 1000;
     public static final int MAFIA_HEAL_TIME = 10 * 1000;
@@ -105,9 +106,11 @@ public class GameServer extends Thread{
         workers.get(0).giveRole(Group.Mafia, Type.GodFather);
         mafias.add(workers.get(0));
 
-        workers.get(1).giveRole(Group.Mafia, Type.DrLector);
-        mafias.add(workers.get(1));
+        /*workers.get(1).giveRole(Group.Mafia, Type.DrLector);
+        mafias.add(workers.get(1));*/
 
+        workers.get(1).giveRole(Group.City, Type.Mayor);
+        citizens.add(workers.get(1));
 
         /*
         workers.get(2).giveRole(Group.Mafia, Type.OrdMafia);
@@ -198,21 +201,23 @@ public class GameServer extends Thread{
 
         ServerWorker dayVoteWinner = voter.dayVote();
 
-        if(dayVoteWinner == null){
-            sendMsgToAllAwake(GameServer.MSG + " " + GameServer.SERVER_NAME + " " +
-                    "No one is going to die today!" + "\n");
-        } else {
-            sendMsgToAllAwake(GameServer.MSG + " " + GameServer.SERVER_NAME + " " +
-                    "Today " + dayVoteWinner.getUserName() + " is going to die!" + "\n");
-        }
-
         // Mayor vote
         System.out.println("MAYOR VOTE");
 
-        boolean doTheKill = dayVoteWinner != null && voter.mayorVote();
+        boolean doTheKill = dayVoteWinner != null && voter.mayorVote(dayVoteWinner.getUserName());
 
         if(doTheKill){
-            // DO THE KILL
+            System.err.println("MAYOR SAID TO DO THE KILL!");
+
+            sendMsgToAllAwake(GameServer.MSG + " " + GameServer.SERVER_NAME + " " +
+                    "Today " + dayVoteWinner.getUserName() + " is going to die!" + "\n");
+
+            // DO THE KILL!
+        } else {
+            System.err.println("MAYOR SAID DONT DO THE KILL!");
+
+            sendMsgToAllAwake(GameServer.MSG + " " + GameServer.SERVER_NAME + " " +
+                    "No one is going to die today!" + "\n");
         }
 
         System.out.println("DAY FINISHED");
@@ -261,5 +266,14 @@ public class GameServer extends Thread{
             if(!worker.isDead() && !worker.isSleep()){
                 worker.sendMsg(toSend);
             }
+    }
+
+    // when playing with 10 players, there is exactly on of each type
+    public ServerWorker findWorker(Group group, Type type) {
+        for(ServerWorker worker : workers)
+            if(worker.getGroup() == group && worker.getType() == type)
+                return worker;
+
+        return null;
     }
 }

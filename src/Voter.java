@@ -1,6 +1,9 @@
+import com.sun.istack.internal.NotNull;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class Voter {
@@ -12,10 +15,13 @@ public class Voter {
 
     public ServerWorker dayVote() throws InterruptedException, IOException {
         ArrayList<ServerWorker> options = new ArrayList<>();
+        ArrayList<String> optionsString = new ArrayList<>();
 
         for(ServerWorker worker : server.getWorkers())
-            if(!worker.isDead())
+            if(!worker.isDead()) {
                 options.add(worker);
+                optionsString.add(worker.getUserName());
+            }
 
 
         ArrayBlockingQueue<Integer> preResults = new ArrayBlockingQueue<>(GameServer.PLAYER_COUNT);
@@ -29,10 +35,9 @@ public class Voter {
 
         // starting votes
         for(ServerWorker worker : voters)
-            worker.getVote(voteBody, GameServer.DAY_VOTE_TIME, options, preResults);
+            worker.getVote(voteBody, GameServer.DAY_VOTE_TIME, optionsString, preResults);
 
         // waiting to vote...
-        //Thread.sleep(GameServer.DAY_VOTE_TIME);
         for(int i = 0; i < GameServer.DAY_VOTE_TIME/GameServer.TIME_TICK; i++){
             Thread.sleep(GameServer.TIME_TICK);
             if(hasAllVoted(voters))
@@ -73,8 +78,43 @@ public class Voter {
     }
 
     // true -> remove dayVote
-    public boolean mayorVote(){
-        return false;
+    public boolean mayorVote(String userNameToKill) throws IOException, InterruptedException {
+        if(userNameToKill == null)
+            return false;
+
+        ServerWorker mayor = server.findWorker(Group.City, Type.Mayor);
+        if(mayor == null)
+            return false;
+
+        // preparing vote
+        ArrayList<String> options = new ArrayList<>();
+        options.add("Yes");
+        options.add("No");
+
+        ArrayBlockingQueue<Integer> preResults = new ArrayBlockingQueue<Integer>(1);
+
+        String voteBody = "Players voted to kill " + userNameToKill + ", as the mayor, do you agree?";
+
+        // voting
+        mayor.getVote(voteBody, GameServer.MAYOR_VOTE_TIME, options, preResults);
+
+        // waiting to vote...
+        for(int i = 0; i < GameServer.MAYOR_VOTE_TIME/GameServer.TIME_TICK; i++){
+            Thread.sleep(GameServer.TIME_TICK);
+            if(mayor.hasVoted())
+                break;
+        }
+
+        // closing the vote
+        mayor.closeVote();
+
+        try{
+            int result = preResults.take();
+            return result == 1;
+        } catch (InterruptedException e){
+            e.printStackTrace();
+            return false;
+        }
     }
 
     private boolean hasAllVoted(ArrayList<ServerWorker> voters) {

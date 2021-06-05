@@ -133,7 +133,7 @@ public class Client {
         String body = tokens[0].split(" ", 2)[1];
         int voteTime = Integer.parseInt(options[options.length-1]) / 1000;
 
-        System.out.println("You are voting! Vote in " + voteTime + " seconds!");
+        System.out.println("\n- You are voting! Vote in " + voteTime + " seconds! -");
 
         System.out.println(body);
 

@@ -60,6 +60,14 @@ public class ServerWorker extends Thread{
         return hasVoted;
     }
 
+    public Group getGroup() {
+        return group;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
     @Override
     public void run() {
         System.out.println("Server Worker Started.");
@@ -192,13 +200,13 @@ public class ServerWorker extends Thread{
         server.sendMsgToAllAwake(toSend);
     }
 
-    public void getVote(String voteBody, int voteTime, ArrayList<ServerWorker> options,
+    public void getVote(String voteBody, int voteTime, ArrayList<String> options,
                         ArrayBlockingQueue<Integer> results) throws IOException {
 
         String optionBody = "";
         int cnt = 1;
-        for(ServerWorker worker : options)
-            optionBody += worker.getUserName() + " ";
+        for(String workerUserName : options)
+            optionBody += workerUserName + " ";
 
         String toSend = GameServer.VOTE + " " + voteBody + "::" + optionBody + voteTime + "\n";
         outputStream.write(toSend.getBytes());
