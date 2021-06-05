@@ -6,18 +6,20 @@ public class ServerWorker extends Thread{
     private OutputStream outputStream;
     private InputStream inputStream;
     private BufferedReader bufferedReader;
+    private GameServer server;
 
-    private String userName;
+    private String userName; // surely just one word
     private Group group;
     private Type type;
 
-    private boolean isAlive;
+    private boolean isDead;
     private boolean isSleep;
     private boolean isMute;
 
-    public ServerWorker(Socket connectionSocket){
+    public ServerWorker(Socket connectionSocket, GameServer server){
         this.connectionSocket = connectionSocket;
-        isAlive = true;
+        this.server = server;
+        isDead = false;
         isSleep = true;
         isMute = false;
     }
@@ -25,6 +27,10 @@ public class ServerWorker extends Thread{
     public void giveRole(Group group, Type type){
         this.group = group;
         this.type = type;
+    }
+
+    public boolean isDead() {
+        return isDead;
     }
 
     @Override
@@ -62,10 +68,39 @@ public class ServerWorker extends Thread{
     public void wakeUp() throws IOException {
         isSleep = false;
         outputStream.write((GameServer.WAKEUP + "\n").getBytes());
+
+        System.out.println("Getting input from " + userName + "...");
+
+        Thread readerThread  = new Thread() {
+
+            @Override
+            public void run() {
+                String line;
+                try {
+                    while ((line = bufferedReader.readLine()) != null) {
+                        if (isSleep)
+                            break;
+                        if (isMute)
+                            continue;
+
+                        // line: MSG <sender> <body>
+                        server.sendMsgToAllAwake(line + "\n");
+                    }
+                } catch (IOException e){
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        readerThread.start();
     }
 
     public void goSleep() throws IOException {
         isSleep = true;
         outputStream.write((GameServer.SLEEP + "\n").getBytes());
+    }
+
+    public void sendMsg(String toSend) throws IOException {
+        outputStream.write(toSend.getBytes());
     }
 }

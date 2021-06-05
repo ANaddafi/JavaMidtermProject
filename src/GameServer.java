@@ -12,6 +12,8 @@ public class GameServer extends Thread{
     public static final String MSG = "MSG";
     public static final String ERR = "ERR";
 
+    public static final boolean DEBUG = true;
+
 
     private final int port;
 
@@ -33,7 +35,7 @@ public class GameServer extends Thread{
 
             for(int i = 0; i < PLAYER_COUNT; i++){
                 Socket clientSocket = serverSocket.accept();
-                ServerWorker worker = new ServerWorker(clientSocket);
+                ServerWorker worker = new ServerWorker(clientSocket, this);
                 workers.add(worker);
                 worker.start();
             }
@@ -104,11 +106,11 @@ public class GameServer extends Thread{
 
         // The day cycle begins
         System.out.println("DAY CYCLE BEGINS");
-        while(!gameIsFinished()){
+        while(!gameIsFinished() || DEBUG){
             // DAY
             System.out.println("IT'S DAY");
             wakeUpAll();
-            Thread.sleep(1000);
+            Thread.sleep(20 * 1000);
 
             // NIGHT
             System.out.println("ITS NIGHT");
@@ -118,7 +120,6 @@ public class GameServer extends Thread{
         System.out.println("WAITING...");
         while (true)
             Thread.sleep(1000);
-
 
     }
 
@@ -133,7 +134,7 @@ public class GameServer extends Thread{
     }
 
     private boolean gameIsFinished() {
-        return mafias.isEmpty() || mafias.size() == citizens.size();
+        return mafias.isEmpty() || mafias.size() >= citizens.size();
     }
 
     private void waitForLogin() throws InterruptedException {
@@ -146,5 +147,12 @@ public class GameServer extends Thread{
 
             Thread.sleep(500);
         } while (!allLoggedIn);
+    }
+
+    public void sendMsgToAllAwake(String toSend) throws IOException {
+        for(ServerWorker worker : workers)
+            if(!worker.isDead()){
+                worker.sendMsg(toSend);
+            }
     }
 }
