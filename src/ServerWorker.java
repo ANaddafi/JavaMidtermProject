@@ -1,5 +1,7 @@
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class ServerWorker extends Thread{
     private Socket connectionSocket;
@@ -8,6 +10,11 @@ public class ServerWorker extends Thread{
     private BufferedReader bufferedReader;
     private GameServer server;
 
+    private ArrayBlockingQueue<Integer> voteResults;
+    private int voteSize;
+    private boolean hasVoted;
+    private boolean isVoting;
+
     private String userName; // surely just one word
     private Group group;
     private Type type;
@@ -15,6 +22,7 @@ public class ServerWorker extends Thread{
     private boolean isDead;
     private boolean isSleep;
     private boolean isMute;
+    private boolean isReady;
 
     public ServerWorker(Socket connectionSocket, GameServer server){
         this.connectionSocket = connectionSocket;
@@ -22,6 +30,9 @@ public class ServerWorker extends Thread{
         isDead = false;
         isSleep = true;
         isMute = false;
+        isReady = false;
+        isVoting = false;
+        hasVoted = false;
     }
 
     public void giveRole(Group group, Type type){
@@ -31,6 +42,18 @@ public class ServerWorker extends Thread{
 
     public boolean isDead() {
         return isDead;
+    }
+
+    public boolean isReady() {
+        return isReady;
+    }
+
+    public boolean isSleep() {
+        return isSleep;
+    }
+
+    public boolean isMute() {
+        return isMute;
     }
 
     @Override
@@ -71,22 +94,46 @@ public class ServerWorker extends Thread{
             if(tokens.length > 0){
                 String cmd = tokens[0];
 
-                if (GameServer.MSG.equals(cmd)){
+                if (cmd.equals(GameServer.MSG)){
                     if(isSleep)
                         sendErr("You are currently ASLEEP!");
                     else if(isMute)
                         sendErr("You are currently MUTE!");
                     else
-                        server.sendMsgToAllAwake(line);
+                        sendMsgToAllAwake(line);
 
-                } else if (cmd.equals(GameServer.VOTE)){
-                    System.out.println("<VOTE>");
+                } else if (GameServer.VOTE.equals(cmd)){
+                    if(!isVoting || hasVoted || isMute){
+                        sendErr("You can't vote at the moment");
+                        // TODO TELL WHY
+                    }else if(tokens.length != 2 || !isNumber(tokens[1]))
+                        sendErr("Enter a valid number");
+                    else
+                        checkVote(tokens[1]);
 
                 } else {
                     System.err.println("Unknown command from " + userName + " <" + cmd + ">");
                 }
             }
         }
+    }
+
+    private void checkVote(String vote) throws IOException {
+        int voteIndex = Integer.parseInt(vote);
+        if(voteIndex > 0 && voteIndex <= voteSize && !hasVoted) {
+            hasVoted = true;
+            voteResults.add(voteIndex);
+            sendErr("OK");
+        } else
+            sendErr("Enter a valid number");
+    }
+
+    private boolean isNumber(String str) {
+        boolean isNum = true;
+        for(char c : str.toCharArray())
+            isNum &= '0' <= c && c <= '9';
+
+        return isNum;
     }
 
     private void sendErr(String error) throws IOException {
@@ -121,6 +168,42 @@ public class ServerWorker extends Thread{
     public void sendMsg(String toSend) throws IOException {
         if(!toSend.endsWith("\n"))
             toSend += "\n";
+        outputStream.write(toSend.getBytes());
+    }
+
+    public void sendMsgToAllAwake(String toSend) throws IOException {
+        /*for(ServerWorker worker : server.getWorkers())
+            if(!worker.isDead() && !worker.isSleep()){
+                worker.sendMsg(toSend);
+            }*/
+
+        server.sendMsgToAllAwake(toSend);
+    }
+
+    public void getVote(String voteBody, int voteTime, ArrayList<ServerWorker> options,
+                        ArrayBlockingQueue<Integer> results) throws IOException {
+
+        String optionBody = "";
+        int cnt = 1;
+        for(ServerWorker worker : options)
+            optionBody += worker.getUserName() + " ";
+
+        String toSend = GameServer.VOTE + " " + voteBody + "::" + optionBody + " " + voteTime + "\n";
+        outputStream.write(toSend.getBytes());
+
+        isVoting = true;
+        hasVoted = false;
+        voteResults = results;
+        voteSize = options.size();
+    }
+
+    public void closeVote() throws IOException {
+        isVoting = false;
+        hasVoted = false;
+        voteResults = null;
+        voteSize = 0;
+
+        String toSend = GameServer.TIMEOUT + "\n";
         outputStream.write(toSend.getBytes());
     }
 }

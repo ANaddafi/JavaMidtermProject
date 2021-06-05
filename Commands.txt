@@ -5,7 +5,7 @@ WAKEUP
     * Starts receiving messages
         So the thread which is reading should start (t.notify())
 VOTE
-    Server -> Client : VOTE <vote msg> <vote list> <vote time>
+    Server -> Client : VOTE <vote msg>::<vote list> <vote time>
     Client -> Server : VOTE <int index>
     * <vote list> should only contain eligible players (alive, doctor not heal him twice, etc.)
     * for Sniper & Psycho, there must be a 'null' object in list, so he can choose to skip
@@ -27,3 +27,12 @@ DEAD
 MUTE
     MUTE
     * you are muted for one round
+
+TIMEOUT
+    TIMEOUT
+    * vote is closed because timeout
+
+READY
+    READY
+    client -> server
+    * when client is ready to vote

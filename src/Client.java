@@ -14,6 +14,9 @@ public class Client {
     private static boolean isDead;
     private static boolean isMute;
 
+    private static boolean isVoting;
+    private static boolean hasVoted;
+
     private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
@@ -55,21 +58,28 @@ public class Client {
                         if (tokens.length > 0) {
                             String cmd = tokens[0];
 
-                            if (cmd.equals(GameServer.SLEEP)) {
+                            if (GameServer.SLEEP.equals(cmd)) {
                                 isSleep = true;
                                 System.out.println("\nYou are now ASLEEP! You can't speak or listen!");
 
-                            } else if (cmd.equals(GameServer.WAKEUP)) {
+                            } else if (GameServer.WAKEUP.equals(cmd)) {
                                 isSleep = false;
                                 System.out.println("\nYou are now AWAKE! You can speak or listen!");
 
-                            } else if (cmd.equals(GameServer.MSG)) {
+                            } else if (GameServer.MSG.equals(cmd)) {
                                 showMsg(line);
 
-                            } else if (cmd.equals(GameServer.ERR)) {
+                            } else if (GameServer.ERR.equals(cmd)) {
+                                if(isVoting)
+                                    handleVoteResponse(line);
                                 System.err.println(line.split(" ", 2)[1]);
 
-                            } else{
+                            } else if (GameServer.VOTE.equals(cmd)){
+                                handleVote(line);
+
+                            } else if (GameServer.TIMEOUT.equals(cmd)) {
+                                isVoting = false;
+                            } else {
                                 System.out.println("Unknown command <" + cmd + ">");
                             }
                         }
@@ -86,13 +96,16 @@ public class Client {
         Thread writerThread = new Thread() {
             @Override
             public void run() {
-                String line;
-                while ((line = scanner.nextLine()) != null) {
-                    try {
-                        sendMsg(line);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                try {
+                    String line;
+                    while ((line = scanner.nextLine()) != null) {
+                        if(isVoting)
+                            sendVote(line);
+                        else
+                            sendMsg(line);
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         };
@@ -100,6 +113,40 @@ public class Client {
         writerThread.start();
     }
 
+    private static void handleVoteResponse(String line) {
+        String body = line.split(" ", 2)[1];
+        if("OK".equals(body)) {
+            hasVoted = true;
+            System.err.println("Your vote is received!");
+        } else
+            System.err.println(body);
+    }
+
+    // format: <VOTE> <body>::<options> <time>
+    private static void handleVote(String line) {
+        isVoting = true;
+        String[] tokens = line.split("::");
+        String[] options = tokens[1].split(" "); // last one is <time>
+
+        String body = tokens[0].split(" ", 2)[1];
+        int voteTime = Integer.parseInt(options[options.length-1]) / 1000;
+
+        System.out.println("You are voting! Vote in " + voteTime + " seconds!");
+
+        System.out.println(body);
+
+        int cnt = options.length - 1; // one of them is <time>
+        for(int i = 1; i <= cnt; i++)
+            System.out.print("" + i + ")" + options[i-1] + " ");
+
+        System.out.println();
+    }
+
+
+    private static void sendVote(String line) throws IOException {
+        String toSend = GameServer.VOTE + " " + line + "\n";
+        outputStream.write(toSend.getBytes());
+    }
 
     // format : MSG <sender> <body>
     private static void showMsg(String line) {

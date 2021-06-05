@@ -4,13 +4,34 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 public class GameServer extends Thread{
-    private static final int PLAYER_COUNT = 2;
+    public static final int PLAYER_COUNT = 2;
     public static final String SERVER_NAME = "SERVER";
     public static final String SLEEP = "SLEEP";
     public static final String WAKEUP = "WAKEUP";
     public static final String VOTE = "VOTE";
     public static final String MSG = "MSG";
     public static final String ERR = "ERR";
+    public static final String TIMEOUT = "TIMEOUT";
+
+
+    // time in milli second
+    public static final int TIME_TICK = 1000;
+    public static final int DAY_TIME = 20 * 1000; // should be 5 mins
+    public static final int DAY_VOTE_TIME = 20 * 1000; // should be 30 secs
+    public static final int MAFIA_TALK_TIME = 30 * 1000;
+    public static final int MAFIA_KILL_TIME = 10 * 1000;
+    public static final int MAFIA_HEAL_TIME = 10 * 1000;
+    public static final int DR_HEAL_TIME = 10 * 1000;
+    public static final int INSPECT_TIME = 10 * 1000;
+    public static final int SNIPE_TIME = 10 * 1000;
+    public static final int PSYCHO_TIME = 10 * 1000;
+    public static final int STRONG_TIME = 10 * 100;
+
+
+    public int drLectorSelfHeal;
+    public int doctorSelfHeal;
+    public int strongQuery;
+    public int strongSurvived;
 
     public static final boolean DEBUG = true;
 
@@ -20,12 +41,19 @@ public class GameServer extends Thread{
     private final ArrayList<ServerWorker> workers;
     private final ArrayList<ServerWorker> mafias;
     private final ArrayList<ServerWorker> citizens;
+    private final Voter voter;
 
     public GameServer(int port){
         this.port = port;
         workers = new ArrayList<>();
         mafias = new ArrayList<>();
         citizens = new ArrayList<>();
+        voter = new Voter(this);
+
+        drLectorSelfHeal = 0;
+        doctorSelfHeal = 0;
+        strongQuery = 0;
+        strongSurvived = 0;
     }
 
     public boolean hasUserName(String userName) {
@@ -120,12 +148,29 @@ public class GameServer extends Thread{
             // DAY
             System.out.println("IT'S DAY");
             wakeUpAll();
-            Thread.sleep(20 * 1000);
+
+            for(int i = 0; i < DAY_TIME/TIME_TICK; i++){
+                Thread.sleep(TIME_TICK);
+                // TODO HANDLE READY IN WORKER & CLIENT
+                if(allReady())
+                    break;
+            }
+
+            System.out.println("DAY VOTE");
+            ServerWorker dayVoteWinner = voter.dayVote();
+
+            if(dayVoteWinner == null){
+                sendMsgToAllAwake(GameServer.MSG + " " + GameServer.SERVER_NAME + " " +
+                        "No one is going to die today!" + "\n");
+            } else {
+                sendMsgToAllAwake(GameServer.MSG + " " + GameServer.SERVER_NAME + " " +
+                        "Today " + dayVoteWinner.getUserName() + " is going to die!" + "\n");
+            }
 
             // NIGHT
             System.out.println("ITS NIGHT");
             goSleepAll();
-            Thread.sleep(10 * 1000);
+            Thread.sleep(20 * 1000);
 
         }
 
@@ -133,6 +178,14 @@ public class GameServer extends Thread{
         while (true)
             Thread.sleep(1000);
 
+    }
+
+    private boolean allReady() {
+        boolean ready = true;
+        for(ServerWorker worker : workers)
+            ready &= worker.isReady();
+
+        return ready;
     }
 
     private void goSleepAll() throws IOException {
@@ -161,9 +214,13 @@ public class GameServer extends Thread{
         } while (!allLoggedIn);
     }
 
+    public ArrayList<ServerWorker> getWorkers() {
+        return workers;
+    }
+
     public void sendMsgToAllAwake(String toSend) throws IOException {
         for(ServerWorker worker : workers)
-            if(!worker.isDead()){
+            if(!worker.isDead() && !worker.isSleep()){
                 worker.sendMsg(toSend);
             }
     }
