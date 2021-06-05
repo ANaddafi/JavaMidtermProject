@@ -17,4 +17,13 @@ MSG
 
 ERR
     ERR
-    * your username has been chosen before
+    * your username has been chosen before / is invalid
+    * you are currently asleep
+
+DEAD
+    DEAD
+    * you are dead
+
+MUTE
+    MUTE
+    * you are muted for one round

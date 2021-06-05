@@ -44,15 +44,54 @@ public class ServerWorker extends Thread{
             String line;
             do {
                 line = bufferedReader.readLine();
-                // TODO CHECK DUPLICATE USERNAME
+
+                if(line.contains(" ") || server.hasUserName(line)) {
+                    sendErr("NO");
+                    line = null;
+                }
             } while (line == null);
+
+            sendErr("OK");
 
             userName = line;
             System.out.println("User " + userName + " joined!");
 
+            handleClientInput();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void handleClientInput() throws IOException {
+        String line;
+        while( (line = bufferedReader.readLine()) != null){
+            String[] tokens = line.split(" ");
+
+            if(tokens.length > 0){
+                String cmd = tokens[0];
+
+                if (GameServer.MSG.equals(cmd)){
+                    if(isSleep)
+                        sendErr("You are currently ASLEEP!");
+                    else if(isMute)
+                        sendErr("You are currently MUTE!");
+                    else
+                        server.sendMsgToAllAwake(line);
+
+                } else if (cmd.equals(GameServer.VOTE)){
+                    System.out.println("<VOTE>");
+
+                } else {
+                    System.err.println("Unknown command from " + userName + " <" + cmd + ">");
+                }
+            }
+        }
+    }
+
+    private void sendErr(String error) throws IOException {
+        String toSend = GameServer.ERR + " " + error + "\n";
+        outputStream.write(toSend.getBytes());
     }
 
     public void sendRole() throws IOException {
@@ -69,38 +108,19 @@ public class ServerWorker extends Thread{
         isSleep = false;
         outputStream.write((GameServer.WAKEUP + "\n").getBytes());
 
-        System.out.println("Getting input from " + userName + "...");
-
-        Thread readerThread  = new Thread() {
-
-            @Override
-            public void run() {
-                String line;
-                try {
-                    while ((line = bufferedReader.readLine()) != null) {
-                        if (isSleep)
-                            break;
-                        if (isMute)
-                            continue;
-
-                        // line: MSG <sender> <body>
-                        server.sendMsgToAllAwake(line + "\n");
-                    }
-                } catch (IOException e){
-                    e.printStackTrace();
-                }
-            }
-        };
-
-        readerThread.start();
+        System.out.println(userName + " is now awake.");
     }
 
     public void goSleep() throws IOException {
         isSleep = true;
         outputStream.write((GameServer.SLEEP + "\n").getBytes());
+
+        System.out.println(userName + " is now asleep.");
     }
 
     public void sendMsg(String toSend) throws IOException {
+        if(!toSend.endsWith("\n"))
+            toSend += "\n";
         outputStream.write(toSend.getBytes());
     }
 }

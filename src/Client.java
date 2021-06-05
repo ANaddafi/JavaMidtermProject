@@ -32,74 +32,86 @@ public class Client {
             System.out.println("Welcome to the game of MAFIA!");
 
             handleLogin();
-            gameLoop();
+            handleGame();
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void gameLoop() throws IOException {
-        String line;
+    private static void handleGame() throws IOException {
 
-        while ((line = bufferedReader.readLine()) != null){
+        // READER THREAD
+        Thread readerThread = new Thread() {
+            @Override
+            public void run() {
+                String line;
 
-            String[] tokens = line.split(" ");
+                try {
+                    while ((line = bufferedReader.readLine()) != null) {
 
-            if(tokens.length > 0){
-                String cmd = tokens[0];
+                        String[] tokens = line.split(" ");
 
-                if(cmd.equals(GameServer.SLEEP)){
-                    isSleep = true;
-                    System.out.println("You are now ASLEEP! You can't speak or listen!");
+                        if (tokens.length > 0) {
+                            String cmd = tokens[0];
 
-                } else if(cmd.equals(GameServer.WAKEUP)){
-                    isSleep = false;
-                    System.out.println("You are now AWAKE! You can speak or listen!");
+                            if (cmd.equals(GameServer.SLEEP)) {
+                                isSleep = true;
+                                System.out.println("\nYou are now ASLEEP! You can't speak or listen!");
 
-                    Thread readerThread = new Thread(){
-                        @Override
-                        public void run() {
-                            String input;
-                            while((input = scanner.nextLine()) != null){
-                                if(isSleep) {
-                                    // System.out.println("You're ASLEEP!");
-                                    break;
-                                }
-                                if(isMute) {
-                                    System.out.println("You're MUTE!");
-                                    continue;
-                                }
+                            } else if (cmd.equals(GameServer.WAKEUP)) {
+                                isSleep = false;
+                                System.out.println("\nYou are now AWAKE! You can speak or listen!");
 
-                                try {
-                                    sendMsg(input);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
+                            } else if (cmd.equals(GameServer.MSG)) {
+                                showMsg(line);
 
+                            } else if (cmd.equals(GameServer.ERR)) {
+                                System.err.println(line.split(" ", 2)[1]);
+
+                            } else{
+                                System.out.println("Unknown command <" + cmd + ">");
                             }
                         }
-                    };
-
-                    readerThread.start();
-
-                } else if(cmd.equals(GameServer.MSG)){
-                    showMsg(line);
-
-                } else {
-                    System.out.println("Unknown command <" + cmd + ">");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
-        }
+        };
+
+        readerThread.start();
+
+        // WRITER THREAD
+        Thread writerThread = new Thread() {
+            @Override
+            public void run() {
+                String line;
+                while ((line = scanner.nextLine()) != null) {
+                    try {
+                        sendMsg(line);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+
+        writerThread.start();
     }
+
 
     // format : MSG <sender> <body>
     private static void showMsg(String line) {
         String[] tokens = line.split(" ", 3);
+        if(tokens.length < 3)
+            return;
+
         String sender = tokens[1];
         String body = tokens[2];
 
-        System.out.println(sender + " says: " + body);
+        if(body != null && body.length() > 0)
+            System.out.println(sender + ": " + body);
     }
 
     private static void sendMsg(String body) throws IOException {
@@ -112,14 +124,26 @@ public class Client {
         String login;
         do{
             login = scanner.nextLine();
-            if(login.contains(" "))
-                System.out.print("Your user name must be ONE word!\nTry again: ");
-        } while (login.contains(" "));
+            outputStream.write((login + "\n").getBytes());
 
-        // TODO CHECK IF NAME IS DUPLICATE
+            String response = bufferedReader.readLine();
 
-        outputStream.write((login + "\n").getBytes());
+            if("NO".equals(response.split(" ")[1])) {
+                System.out.print("Invalid or duplicate name!");
+
+                if(login.contains(" "))
+                    System.out.println(" Name must be ONE word!");
+
+                System.out.print("Try again: ");
+
+                login = null;
+            }
+
+        } while (login == null);
+
         userName = login;
+
+        System.out.println("Please wait for other players to join...");
 
         String line;
         do{

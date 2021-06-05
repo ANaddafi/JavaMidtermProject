@@ -28,6 +28,16 @@ public class GameServer extends Thread{
         citizens = new ArrayList<>();
     }
 
+    public boolean hasUserName(String userName) {
+        boolean hasUserName = false;
+
+        for(ServerWorker worker : workers)
+            if(worker.getUserName() != null)
+                hasUserName |= worker.getUserName().equals(userName);
+
+        return hasUserName;
+    }
+
     @Override
     public void run() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -115,6 +125,8 @@ public class GameServer extends Thread{
             // NIGHT
             System.out.println("ITS NIGHT");
             goSleepAll();
+            Thread.sleep(10 * 1000);
+
         }
 
         System.out.println("WAITING...");
