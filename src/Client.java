@@ -72,7 +72,8 @@ public class Client {
                             } else if (GameServer.ERR.equals(cmd)) {
                                 if(isVoting)
                                     handleVoteResponse(line);
-                                System.err.println(line.split(" ", 2)[1]);
+                                else
+                                    System.err.println(line.split(" ", 2)[1]);
 
                             } else if (GameServer.VOTE.equals(cmd)){
                                 handleVote(line);
@@ -116,8 +117,8 @@ public class Client {
     private static void handleVoteResponse(String line) {
         String body = line.split(" ", 2)[1];
         if("OK".equals(body)) {
-            hasVoted = true;
             System.err.println("Your vote is received!");
+            hasVoted = true;
         } else
             System.err.println(body);
     }
@@ -125,6 +126,7 @@ public class Client {
     // format: <VOTE> <body>::<options> <time>
     private static void handleVote(String line) {
         isVoting = true;
+        hasVoted = false;
         String[] tokens = line.split("::");
         String[] options = tokens[1].split(" "); // last one is <time>
 
@@ -137,7 +139,7 @@ public class Client {
 
         int cnt = options.length - 1; // one of them is <time>
         for(int i = 1; i <= cnt; i++)
-            System.out.print("" + i + ")" + options[i-1] + " ");
+            System.out.print("" + i + ")" + options[i-1] + "\t");
 
         System.out.println();
     }

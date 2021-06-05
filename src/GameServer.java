@@ -2,6 +2,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class GameServer extends Thread{
     public static final int PLAYER_COUNT = 2;
@@ -16,8 +18,8 @@ public class GameServer extends Thread{
 
     // time in milli second
     public static final int TIME_TICK = 1000;
-    public static final int DAY_TIME = 20 * 1000; // should be 5 mins
-    public static final int DAY_VOTE_TIME = 20 * 1000; // should be 30 secs
+    public static final int DAY_TIME = 10 * 1000; // should be 5 mins
+    public static final int DAY_VOTE_TIME = 10 * 1000; // should be 30 secs
     public static final int MAFIA_TALK_TIME = 30 * 1000;
     public static final int MAFIA_KILL_TIME = 10 * 1000;
     public static final int MAFIA_HEAL_TIME = 10 * 1000;
@@ -155,6 +157,7 @@ public class GameServer extends Thread{
                 if(allReady())
                     break;
             }
+
 
             System.out.println("DAY VOTE");
             ServerWorker dayVoteWinner = voter.dayVote();

@@ -94,7 +94,7 @@ public class ServerWorker extends Thread{
             if(tokens.length > 0){
                 String cmd = tokens[0];
 
-                if (cmd.equals(GameServer.MSG)){
+                if (GameServer.MSG.equals(cmd)){
                     if(isSleep)
                         sendErr("You are currently ASLEEP!");
                     else if(isMute)
@@ -188,7 +188,7 @@ public class ServerWorker extends Thread{
         for(ServerWorker worker : options)
             optionBody += worker.getUserName() + " ";
 
-        String toSend = GameServer.VOTE + " " + voteBody + "::" + optionBody + " " + voteTime + "\n";
+        String toSend = GameServer.VOTE + " " + voteBody + "::" + optionBody + voteTime + "\n";
         outputStream.write(toSend.getBytes());
 
         isVoting = true;
