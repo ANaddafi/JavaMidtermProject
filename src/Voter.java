@@ -32,7 +32,12 @@ public class Voter {
             worker.getVote(voteBody, GameServer.DAY_VOTE_TIME, options, preResults);
 
         // waiting to vote...
-        Thread.sleep(GameServer.DAY_VOTE_TIME);
+        //Thread.sleep(GameServer.DAY_VOTE_TIME);
+        for(int i = 0; i < GameServer.DAY_VOTE_TIME/GameServer.TIME_TICK; i++){
+            Thread.sleep(GameServer.TIME_TICK);
+            if(hasAllVoted(voters))
+                break;
+        }
 
         //closing votes
         for(ServerWorker worker : voters)
@@ -70,5 +75,13 @@ public class Voter {
     // true -> remove dayVote
     public boolean mayorVote(){
         return false;
+    }
+
+    private boolean hasAllVoted(ArrayList<ServerWorker> voters) {
+        boolean hasVoted = true;
+        for(ServerWorker worker : voters)
+            hasVoted &= worker.hasVoted();
+
+        return hasVoted;
     }
 }

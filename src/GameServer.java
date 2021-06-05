@@ -7,19 +7,20 @@ import java.util.TimerTask;
 
 public class GameServer extends Thread{
     public static final int PLAYER_COUNT = 2;
-    public static final String SERVER_NAME = "SERVER";
+    public static final String SERVER_NAME = "GOD";
     public static final String SLEEP = "SLEEP";
     public static final String WAKEUP = "WAKEUP";
     public static final String VOTE = "VOTE";
     public static final String MSG = "MSG";
     public static final String ERR = "ERR";
     public static final String TIMEOUT = "TIMEOUT";
+    public static final String READY = "READY";
 
 
     // time in milli second
     public static final int TIME_TICK = 1000;
-    public static final int DAY_TIME = 10 * 1000; // should be 5 mins
-    public static final int DAY_VOTE_TIME = 10 * 1000; // should be 30 secs
+    public static final int DAY_TIME = 5 * 60 * 1000; // should be 5 mins
+    public static final int DAY_VOTE_TIME = 30 * 1000; // should be 30 secs
     public static final int MAFIA_TALK_TIME = 30 * 1000;
     public static final int MAFIA_KILL_TIME = 10 * 1000;
     public static final int MAFIA_HEAL_TIME = 10 * 1000;
@@ -146,34 +147,13 @@ public class GameServer extends Thread{
 
         // The day cycle begins
         System.out.println("DAY CYCLE BEGINS");
+
         while(!gameIsFinished() || DEBUG){
-            // DAY
-            System.out.println("IT'S DAY");
-            wakeUpAll();
+            handleDay();
 
-            for(int i = 0; i < DAY_TIME/TIME_TICK; i++){
-                Thread.sleep(TIME_TICK);
-                // TODO HANDLE READY IN WORKER & CLIENT
-                if(allReady())
-                    break;
-            }
+            Thread.sleep(3000);
 
-
-            System.out.println("DAY VOTE");
-            ServerWorker dayVoteWinner = voter.dayVote();
-
-            if(dayVoteWinner == null){
-                sendMsgToAllAwake(GameServer.MSG + " " + GameServer.SERVER_NAME + " " +
-                        "No one is going to die today!" + "\n");
-            } else {
-                sendMsgToAllAwake(GameServer.MSG + " " + GameServer.SERVER_NAME + " " +
-                        "Today " + dayVoteWinner.getUserName() + " is going to die!" + "\n");
-            }
-
-            // NIGHT
-            System.out.println("ITS NIGHT");
-            goSleepAll();
-            Thread.sleep(20 * 1000);
+            handleNight();
 
         }
 
@@ -181,6 +161,61 @@ public class GameServer extends Thread{
         while (true)
             Thread.sleep(1000);
 
+    }
+
+    private void handleNight() throws IOException, InterruptedException {
+        // NIGHT
+        System.out.println("ITS NIGHT");
+
+        // preparations
+        prepareNight();
+
+        Thread.sleep(10 * 1000);
+    }
+
+    private void prepareNight() throws IOException {
+        for(ServerWorker worker : workers)
+            if(!worker.isDead())
+                worker.NightReset();
+    }
+
+    private void handleDay() throws IOException, InterruptedException {
+        // DAY
+        System.out.println("IT'S DAY");
+
+        // preparations
+        wakeUpAll();
+
+        // discussion
+        for(int i = 0; i < DAY_TIME/TIME_TICK; i++){
+            Thread.sleep(TIME_TICK);
+            if(allReady())
+                break;
+        }
+
+        // voting
+        System.out.println("DAY VOTE");
+
+        ServerWorker dayVoteWinner = voter.dayVote();
+
+        if(dayVoteWinner == null){
+            sendMsgToAllAwake(GameServer.MSG + " " + GameServer.SERVER_NAME + " " +
+                    "No one is going to die today!" + "\n");
+        } else {
+            sendMsgToAllAwake(GameServer.MSG + " " + GameServer.SERVER_NAME + " " +
+                    "Today " + dayVoteWinner.getUserName() + " is going to die!" + "\n");
+        }
+
+        // Mayor vote
+        System.out.println("MAYOR VOTE");
+
+        boolean doTheKill = dayVoteWinner != null && voter.mayorVote();
+
+        if(doTheKill){
+            // DO THE KILL
+        }
+
+        System.out.println("DAY FINISHED");
     }
 
     private boolean allReady() {
@@ -191,10 +226,10 @@ public class GameServer extends Thread{
         return ready;
     }
 
-    private void goSleepAll() throws IOException {
+    /*private void goSleepAll() throws IOException {
         for(ServerWorker worker : workers)
             worker.goSleep();
-    }
+    }*/
 
     private void wakeUpAll() throws IOException {
         for(ServerWorker worker : workers)

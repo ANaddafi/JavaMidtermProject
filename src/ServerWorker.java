@@ -56,6 +56,10 @@ public class ServerWorker extends Thread{
         return isMute;
     }
 
+    public boolean hasVoted() {
+        return hasVoted;
+    }
+
     @Override
     public void run() {
         System.out.println("Server Worker Started.");
@@ -99,7 +103,11 @@ public class ServerWorker extends Thread{
                         sendErr("You are currently ASLEEP!");
                     else if(isMute)
                         sendErr("You are currently MUTE!");
-                    else
+                    else if(tokens.length == 3 && tokens[2].equalsIgnoreCase(GameServer.READY)){
+                        isReady = true;
+                        sendErr("You're ready tp vote!");
+
+                    } else
                         sendMsgToAllAwake(line);
 
                 } else if (GameServer.VOTE.equals(cmd)){
@@ -111,7 +119,11 @@ public class ServerWorker extends Thread{
                     else
                         checkVote(tokens[1]);
 
-                } else {
+                } /*else if (GameServer.READY.equalsIgnoreCase(cmd)){
+                    isReady = true;
+                    System.err.println(userName + " IS READY!");
+
+                }*/ else {
                     System.err.println("Unknown command from " + userName + " <" + cmd + ">");
                 }
             }
@@ -205,5 +217,11 @@ public class ServerWorker extends Thread{
 
         String toSend = GameServer.TIMEOUT + "\n";
         outputStream.write(toSend.getBytes());
+    }
+
+    public void NightReset() throws IOException {
+        isReady = false;
+        isMute = false;
+        goSleep();
     }
 }
