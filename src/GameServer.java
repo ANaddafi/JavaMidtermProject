@@ -2,8 +2,11 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
+
+// TODO: MESSAGE HANDLER CLASS? (probably static)
+//  WORKER HANDLER CLASS?
+//  BECAUSE THERE ARE TOO MUCH METHODS FOR THAT!
+
 
 public class GameServer extends Thread{
     public static final int PLAYER_COUNT = 2;
@@ -204,20 +207,25 @@ public class GameServer extends Thread{
         // Mayor vote
         System.out.println("MAYOR VOTE");
 
+        if(dayVoteWinner != null)
+            sendMsgToAllAwake(serverMsgFromString("Waiting for Mayors decision..."), findWorker(Group.City, Type.Mayor));
+
         boolean doTheKill = dayVoteWinner != null && voter.mayorVote(dayVoteWinner.getUserName());
 
         if(doTheKill){
             System.err.println("MAYOR SAID TO DO THE KILL!");
 
-            sendMsgToAllAwake(GameServer.MSG + " " + GameServer.SERVER_NAME + " " +
-                    "Today " + dayVoteWinner.getUserName() + " is going to die!" + "\n");
+            sendMsgToAllAwake(serverMsgFromString("Today " + dayVoteWinner.getUserName() + " is going to die!"));
 
             // DO THE KILL!
+            dayVoteWinner.kill();
+            // TODO CHECK: DEAD SHOULD NOT TALK, BUT SHOULD LISTEN,
+            //  SHOULD RECEIVE PROPER SENTENCES, NOT LIKE OTHERS,
+            //  MAYBE A NEW METHOD FOR THAT?
         } else {
             System.err.println("MAYOR SAID DONT DO THE KILL!");
 
-            sendMsgToAllAwake(GameServer.MSG + " " + GameServer.SERVER_NAME + " " +
-                    "No one is going to die today!" + "\n");
+            sendMsgToAllAwake(serverMsgFromString("No one is going to die today!"));
         }
 
         System.out.println("DAY FINISHED");
@@ -267,6 +275,12 @@ public class GameServer extends Thread{
                 worker.sendMsg(toSend);
             }
     }
+    public void sendMsgToAllAwake(String toSend, ServerWorker except) throws IOException {
+        for(ServerWorker worker : workers)
+            if(worker != except && !worker.isDead() && !worker.isSleep()){
+                worker.sendMsg(toSend);
+            }
+    }
 
     // when playing with 10 players, there is exactly on of each type
     public ServerWorker findWorker(Group group, Type type) {
@@ -276,4 +290,13 @@ public class GameServer extends Thread{
 
         return null;
     }
+
+    public String serverMsgFromString(String body){
+        return GameServer.MSG + " " + GameServer.SERVER_NAME + " " + body + "\n";
+    }
+
+    public String msgFromString(String sender, String body){
+        return GameServer.MSG + " " + sender + " " + body + "\n";
+    }
 }
+

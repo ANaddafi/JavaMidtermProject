@@ -197,7 +197,8 @@ public class ServerWorker extends Thread{
                 worker.sendMsg(toSend);
             }*/
 
-        server.sendMsgToAllAwake(toSend);
+        //server.sendMsgToAllAwake(toSend);
+        server.sendMsgToAllAwake(toSend, this);
     }
 
     public void getVote(String voteBody, int voteTime, ArrayList<String> options,
@@ -231,5 +232,9 @@ public class ServerWorker extends Thread{
         isReady = false;
         isMute = false;
         goSleep();
+    }
+
+    public void kill() {
+        isDead = true;
     }
 }
