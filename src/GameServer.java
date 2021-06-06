@@ -106,12 +106,12 @@ public class GameServer extends Thread{
         workers.getWorkers().get(0).giveRole(Group.Mafia, Type.GodFather);
         workers.getWorkers().get(1).giveRole(Group.Mafia, Type.DrLector);
 
-        workers.getWorkers().get(2).giveRole(Group.City, Type.Mayor);
+        //workers.getWorkers().get(2).giveRole(Group.City, Type.Mayor);
+        workers.getWorkers().get(2).giveRole(Group.City, Type.Doctor);
 
         /*
         workers.getWorkers().get(2).giveRole(Group.Mafia, Type.OrdMafia);
 
-        workers.getWorkers().get(3).giveRole(Group.City, Type.Doctor);
         workers.getWorkers().get(4).giveRole(Group.City, Type.Inspector);
         workers.getWorkers().get(5).giveRole(Group.City, Type.Sniper);
         workers.getWorkers().get(6).giveRole(Group.City, Type.Mayor);
@@ -184,9 +184,11 @@ public class GameServer extends Thread{
             System.err.println("MAFIA KILL: " + mafiaShoot.getUserName());
         /////////////
 
+        Thread.sleep(1500);
+
         // wakeup drLector
         ServerWorker drLector = workers.findWorker(Group.Mafia, Type.DrLector);
-        if(!drLector.isDead()) {
+        if(drLector != null && !drLector.isDead()) {
             workers.wakeUpWorker(drLector);
 
             mafiaHeal = voter.lectorVote(drLectorSelfHeal < 1);
@@ -203,9 +205,30 @@ public class GameServer extends Thread{
             System.err.println("MAFIA HEAL: " + mafiaHeal.getUserName());
         /////////////
 
+        Thread.sleep(1500);
+
+        // wakeup Doctor
+        ServerWorker doctor = workers.findWorker(Group.City, Type.Doctor);
+        if(doctor != null && !doctor.isDead()){
+            workers.wakeUpWorker(doctor);
+
+            doctorHeal = voter.doctorVote(doctorSelfHeal < 1);
+            if(doctorHeal == doctor)
+                doctorSelfHeal++;
+
+            workers.sleepWorker(doctor);
+        }
+
+        // DEBUG LOG
+        if(doctorHeal == null)
+            System.err.println("NO DOCTOR HEAL TONIGHT");
+        else
+            System.err.println("DOCTOR HEAL: " + doctorHeal.getUserName());
+        /////////////
+
 
         // affecting night votes:
-        if(mafiaShoot != null){
+        if(mafiaShoot != null && mafiaShoot != doctorHeal){
             mafiaShoot.kill();
             nightNews.add(mafiaShoot.getUserName() + " was killed last night.");
         }

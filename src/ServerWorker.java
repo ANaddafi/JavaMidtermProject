@@ -228,6 +228,7 @@ public class ServerWorker extends Thread{
         if(isDead)
             return;
 
+        hasVoted = false;
         isReady = false;
         isMute = false;
         goSleep();

@@ -151,14 +151,13 @@ public class Voter {
         voter.closeVote();
 
         try{
-            ServerWorker winner = null;
             int index = preResults.take();
             if(index <= 0 || index > options.size())
                 return null;
 
             return options.get(index - 1);
 
-        } catch (InterruptedException e){
+        } catch (InterruptedException | IndexOutOfBoundsException e){
             e.printStackTrace();
             return null;
         }
@@ -206,18 +205,75 @@ public class Voter {
         voter.closeVote();
 
         try{
-            ServerWorker winner = null;
             int index = preResults.take();
             if(index <= 0 || index > options.size())
                 return null;
 
             return options.get(index - 1);
 
-        } catch (InterruptedException e){
+        } catch (InterruptedException | IndexOutOfBoundsException e){
             e.printStackTrace();
             return null;
         }
     }
+
+
+    public ServerWorker doctorVote(boolean canHealSelf) throws IOException, InterruptedException {
+        ArrayList<ServerWorker> options = new ArrayList<>();
+        ArrayList<String> optionsString = new ArrayList<>();
+
+        for(ServerWorker worker : server.getWorkerHandler().getWorkers())
+            if(!worker.isDead()) {
+                options.add(worker);
+                optionsString.add(worker.getUserName());
+            }
+
+
+        ServerWorker voter = server.getWorkerHandler().findWorker(Group.City, Type.Doctor);
+        if(voter == null || voter.isDead())
+            return null;
+
+        if(!canHealSelf) {
+            options.remove(voter);
+            optionsString.remove(voter.getUserName());
+        }
+
+        if(options.isEmpty()){
+            System.err.println("NO OPTIONS FOR DOCTOR");
+            return null;
+        }
+
+        ArrayBlockingQueue<Integer> preResults = new ArrayBlockingQueue<>(1);
+
+        String voteBody = "Choose the person you want to heal tonight";
+
+
+        // starting votes
+        voter.getVote(voteBody, GameServer.DR_HEAL_TIME, optionsString, preResults);
+
+
+        // waiting to vote...
+        for(int i = 0; i < GameServer.DR_HEAL_TIME/GameServer.TIME_TICK && !voter.hasVoted(); i++)
+            Thread.sleep(GameServer.TIME_TICK);
+
+
+        //closing votes
+        voter.closeVote();
+
+
+        try{
+            int index = preResults.take();
+            if(index <= 0 || index > options.size())
+                return null;
+
+            return options.get(index - 1);
+
+        } catch (InterruptedException | IndexOutOfBoundsException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 
     private boolean hasAllVoted(ArrayList<ServerWorker> voters) {
         boolean hasVoted = true;

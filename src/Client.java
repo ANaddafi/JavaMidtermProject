@@ -60,11 +60,11 @@ public class Client {
 
                             if (GameServer.SLEEP.equals(cmd)) {
                                 isSleep = true;
-                                System.out.println("\nYou are now ASLEEP! You can't speak or listen!");
+                                System.err.println("\nYou're ASLEEP! You can't chat.");
 
                             } else if (GameServer.WAKEUP.equals(cmd)) {
                                 isSleep = false;
-                                System.out.println("\nYou are now AWAKE! You can speak or listen!");
+                                System.err.println("\nYou're AWAKE! You can chat.");
 
                             } else if (GameServer.MSG.equals(cmd)) {
                                 showMsg(line);
@@ -80,6 +80,8 @@ public class Client {
 
                             } else if (GameServer.TIMEOUT.equals(cmd)) {
                                 isVoting = false;
+                                hasVoted = false;
+
                             } else if (GameServer.DEAD.equals(cmd)){
                                 isDead = true;
                                 System.err.println("You are DEAD! You can still see other players chats.");
