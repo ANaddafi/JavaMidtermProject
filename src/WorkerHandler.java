@@ -68,6 +68,10 @@ public class WorkerHandler {
         findWorker(group, type).wakeUp(); // dead is handled in 'wakeUp' method
     }
 
+    public void wakeUpWorker(ServerWorker worker) throws IOException {
+        worker.wakeUp();
+    }
+
     public void sleepList(ArrayList<ServerWorker> sleepList) throws IOException {
         for(ServerWorker worker : sleepList)
                 worker.nightReset(); // dead is handled in 'nightReset' method
@@ -75,6 +79,10 @@ public class WorkerHandler {
 
     public void sleepType(Group group, Type type) throws IOException {
         findWorker(group, type).nightReset(); // dead is handled in 'wakeUp' method
+    }
+
+    public void sleepWorker(ServerWorker worker) throws IOException {
+        worker.nightReset();
     }
 
     public boolean allReady() {

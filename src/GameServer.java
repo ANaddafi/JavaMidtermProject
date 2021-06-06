@@ -161,23 +161,20 @@ public class GameServer extends Thread{
         // preparations
         workers.prepareNight();
         firstNight = false;
-        ServerWorker mafiaShoot;
-        ServerWorker mafiaHeal;
-        ServerWorker doctorHeal;
-        ServerWorker sniperShoot;
-        ServerWorker psychoMute;
-        boolean strongQuery;
+        ServerWorker mafiaShoot = null;
+        ServerWorker mafiaHeal = null;
+        ServerWorker doctorHeal = null;
+        ServerWorker sniperShoot = null;
+        ServerWorker psychoMute = null;
+        boolean strongQuery = false;
 
         // wakeup Mafias
         workers.wakeUpList(workers.getMafias());
 
-        for(int i = 0; i < MAFIA_TALK_TIME/TIME_TICK; i++){
+        for(int i = 0; i < MAFIA_TALK_TIME/TIME_TICK && !workers.allReady(); i++)
             Thread.sleep(TIME_TICK);
-            if(workers.allReady())
-                break;
-        }
 
-        mafiaShoot = voter.MafiaVote();
+        mafiaShoot = voter.mafiaVote();
         workers.sleepList(workers.getMafias());
 
         // DEBUG LOG
@@ -185,9 +182,26 @@ public class GameServer extends Thread{
             System.err.println("NO MAFIA KILL TONIGHT");
         else
             System.err.println("MAFIA KILL: " + mafiaShoot.getUserName());
+        /////////////
 
         // wakeup drLector
+        ServerWorker drLector = workers.findWorker(Group.Mafia, Type.DrLector);
+        if(!drLector.isDead()) {
+            workers.wakeUpWorker(drLector);
 
+            mafiaHeal = voter.lectorVote(drLectorSelfHeal < 1);
+            if(mafiaHeal == drLector)
+                drLectorSelfHeal++;
+
+            workers.sleepWorker(drLector);
+        }
+
+        // DEBUG LOG
+        if(mafiaHeal == null)
+            System.err.println("NO MAFIA HEAL TONIGHT");
+        else
+            System.err.println("MAFIA HEAL: " + mafiaHeal.getUserName());
+        /////////////
 
 
         // affecting night votes:

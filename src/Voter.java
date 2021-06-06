@@ -10,6 +10,7 @@ public class Voter {
         this.server = server;
     }
 
+
     public ServerWorker dayVote() throws InterruptedException, IOException {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
@@ -35,11 +36,8 @@ public class Voter {
             worker.getVote(voteBody, GameServer.DAY_VOTE_TIME, optionsString, preResults);
 
         // waiting to vote...
-        for(int i = 0; i < GameServer.DAY_VOTE_TIME/GameServer.TIME_TICK; i++){
+        for(int i = 0; i < GameServer.DAY_VOTE_TIME/GameServer.TIME_TICK && !hasAllVoted(voters); i++)
             Thread.sleep(GameServer.TIME_TICK);
-            if(hasAllVoted(voters))
-                break;
-        }
 
         //closing votes
         for(ServerWorker worker : voters)
@@ -114,7 +112,8 @@ public class Voter {
         }
     }
 
-    public ServerWorker MafiaVote() throws IOException, InterruptedException {
+
+    public ServerWorker mafiaVote() throws IOException, InterruptedException {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
 
@@ -144,11 +143,64 @@ public class Voter {
         voter.getVote(voteBody, GameServer.MAFIA_KILL_TIME, optionsString, preResults);
 
         // waiting to vote...
-        for(int i = 0; i < GameServer.MAFIA_KILL_TIME/GameServer.TIME_TICK; i++){
+        for(int i = 0; i < GameServer.MAFIA_KILL_TIME/GameServer.TIME_TICK && !voter.hasVoted(); i++)
             Thread.sleep(GameServer.TIME_TICK);
-            if(voter.hasVoted())
-                break;
+
+
+        //closing votes
+        voter.closeVote();
+
+        try{
+            ServerWorker winner = null;
+            int index = preResults.take();
+            if(index <= 0 || index > options.size())
+                return null;
+
+            return options.get(index - 1);
+
+        } catch (InterruptedException e){
+            e.printStackTrace();
+            return null;
         }
+    }
+
+
+    public ServerWorker lectorVote(boolean canHealSelf) throws IOException, InterruptedException {
+        ArrayList<ServerWorker> options = new ArrayList<>();
+        ArrayList<String> optionsString = new ArrayList<>();
+
+        for(ServerWorker worker : server.getWorkerHandler().getMafias())
+            if(!worker.isDead()) {
+                options.add(worker);
+                optionsString.add(worker.getUserName());
+            }
+
+
+        ServerWorker voter = server.getWorkerHandler().findWorker(Group.Mafia, Type.DrLector);
+        if(voter == null || voter.isDead())
+            return null;
+
+        if(!canHealSelf) {
+            options.remove(voter);
+            optionsString.remove(voter.getUserName());
+        }
+
+        if(options.isEmpty()){
+            System.err.println("NO OPTIONS FOR DR.LECTOR");
+            return null;
+        }
+
+        ArrayBlockingQueue<Integer> preResults = new ArrayBlockingQueue<>(1);
+
+        String voteBody = "Choose the mafia you want to heal tonight";
+
+
+        // starting votes
+        voter.getVote(voteBody, GameServer.MAFIA_HEAL_TIME, optionsString, preResults);
+
+        // waiting to vote...
+        for(int i = 0; i < GameServer.MAFIA_HEAL_TIME/GameServer.TIME_TICK && !voter.hasVoted(); i++)
+            Thread.sleep(GameServer.TIME_TICK);
 
         //closing votes
         voter.closeVote();
