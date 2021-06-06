@@ -114,6 +114,59 @@ public class Voter {
         }
     }
 
+    public ServerWorker MafiaVote() throws IOException, InterruptedException {
+        ArrayList<ServerWorker> options = new ArrayList<>();
+        ArrayList<String> optionsString = new ArrayList<>();
+
+        for(ServerWorker worker : server.getWorkerHandler().getCity())
+            if(!worker.isDead()) {
+                options.add(worker);
+                optionsString.add(worker.getUserName());
+            }
+
+
+        ArrayBlockingQueue<Integer> preResults = new ArrayBlockingQueue<>(1);
+
+        String voteBody = "Choose the citizen you want to shoot tonight";
+
+        ServerWorker voter = server.getWorkerHandler().findWorker(Group.Mafia, Type.GodFather);
+        if(voter == null || voter.isDead()) {
+            voter = server.getWorkerHandler().findWorker(Group.Mafia, Type.DrLector);
+            if(voter == null || voter.isDead())
+                voter = server.getWorkerHandler().findWorker(Group.Mafia, Type.OrdMafia);
+        }
+
+        if(voter == null || voter.isDead())
+            return null;
+
+
+        // starting votes
+        voter.getVote(voteBody, GameServer.MAFIA_KILL_TIME, optionsString, preResults);
+
+        // waiting to vote...
+        for(int i = 0; i < GameServer.MAFIA_KILL_TIME/GameServer.TIME_TICK; i++){
+            Thread.sleep(GameServer.TIME_TICK);
+            if(voter.hasVoted())
+                break;
+        }
+
+        //closing votes
+        voter.closeVote();
+
+        try{
+            ServerWorker winner = null;
+            int index = preResults.take();
+            if(index <= 0 || index > options.size())
+                return null;
+
+            return options.get(index - 1);
+
+        } catch (InterruptedException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     private boolean hasAllVoted(ArrayList<ServerWorker> voters) {
         boolean hasVoted = true;
         for(ServerWorker worker : voters)

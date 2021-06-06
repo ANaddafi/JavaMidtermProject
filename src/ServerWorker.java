@@ -113,7 +113,7 @@ public class ServerWorker extends Thread{
                         sendErr("You are currently MUTE!");
                     else if(tokens.length == 3 && tokens[2].equalsIgnoreCase(GameServer.READY)){
                         isReady = true;
-                        sendErr("You're ready tp vote!");
+                        sendErr("You're ready for voting!");
 
                     } else
                         sendMsgToAllAwake(line);
@@ -127,11 +127,7 @@ public class ServerWorker extends Thread{
                     else
                         checkVote(tokens[1]);
 
-                } /*else if (GameServer.READY.equalsIgnoreCase(cmd)){
-                    isReady = true;
-                    System.err.println(userName + " IS READY!");
-
-                }*/ else {
+                } else {
                     System.err.println("Unknown command from " + userName + " <" + cmd + ">");
                 }
             }
@@ -172,6 +168,9 @@ public class ServerWorker extends Thread{
     }
 
     public void wakeUp() throws IOException {
+        if(isDead)
+            return;
+
         isSleep = false;
         outputStream.write((GameServer.WAKEUP + "\n").getBytes());
 
@@ -192,12 +191,6 @@ public class ServerWorker extends Thread{
     }
 
     public void sendMsgToAllAwake(String toSend) throws IOException {
-        /*for(ServerWorker worker : server.getWorkers())
-            if(!worker.isDead() && !worker.isSleep()){
-                worker.sendMsg(toSend);
-            }*/
-
-        //server.sendMsgToAllAwake(toSend);
         if(!isDead)
             server.getWorkerHandler().msgToAllAwake(toSend, this);
         else
@@ -231,7 +224,10 @@ public class ServerWorker extends Thread{
         outputStream.write(toSend.getBytes());
     }
 
-    public void NightReset() throws IOException {
+    public void nightReset() throws IOException {
+        if(isDead)
+            return;
+
         isReady = false;
         isMute = false;
         goSleep();

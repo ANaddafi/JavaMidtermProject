@@ -56,14 +56,31 @@ public class WorkerHandler {
 
     public void wakeUpAll() throws IOException {
         for(ServerWorker worker : workers)
-            if(!worker.isDead())
-                worker.wakeUp();
+                worker.wakeUp(); // dead is handled in 'wakeUp' method
+    }
+
+    public void wakeUpList(ArrayList<ServerWorker> wakeUpList) throws IOException {
+        for(ServerWorker worker : wakeUpList)
+                worker.wakeUp(); // dead is handled in 'wakeUp' method
+    }
+
+    public void wakeUpType(Group group, Type type) throws IOException {
+        findWorker(group, type).wakeUp(); // dead is handled in 'wakeUp' method
+    }
+
+    public void sleepList(ArrayList<ServerWorker> sleepList) throws IOException {
+        for(ServerWorker worker : sleepList)
+                worker.nightReset(); // dead is handled in 'nightReset' method
+    }
+
+    public void sleepType(Group group, Type type) throws IOException {
+        findWorker(group, type).nightReset(); // dead is handled in 'wakeUp' method
     }
 
     public boolean allReady() {
         boolean ready = true;
         for(ServerWorker worker : workers)
-            ready &= worker.isDead() || worker.isMute() || worker.isReady();
+            ready &= worker.isDead() || worker.isSleep() || worker.isMute() || worker.isReady();
 
         return ready;
     }
@@ -71,7 +88,7 @@ public class WorkerHandler {
     public void prepareNight() throws IOException {
         for(ServerWorker worker : workers)
             if(!worker.isDead())
-                worker.NightReset();
+                worker.nightReset();
     }
 
     // when playing with 10 players, there is exactly on of each type
@@ -96,5 +113,4 @@ public class WorkerHandler {
                 worker.sendMsg(toSend);
             }
     }
-
 }
