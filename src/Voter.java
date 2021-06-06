@@ -10,7 +10,8 @@ public class Voter {
         this.server = server;
     }
 
-
+    // TODO ONE CAN NOT VOTE HIMSELF!
+    // TODO SKIP OPTION
     public ServerWorker dayVote() throws InterruptedException, IOException {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
@@ -113,6 +114,7 @@ public class Voter {
     }
 
 
+    // TODO SKIP OPTION
     public ServerWorker mafiaVote() throws IOException, InterruptedException {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
@@ -164,6 +166,7 @@ public class Voter {
     }
 
 
+    // TODO SKIP
     public ServerWorker lectorVote(boolean canHealSelf) throws IOException, InterruptedException {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
@@ -218,6 +221,7 @@ public class Voter {
     }
 
 
+    // TODO SKIP
     public ServerWorker doctorVote(boolean canHealSelf) throws IOException, InterruptedException {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
@@ -254,6 +258,52 @@ public class Voter {
 
         // waiting to vote...
         for(int i = 0; i < GameServer.DR_HEAL_TIME/GameServer.TIME_TICK && !voter.hasVoted(); i++)
+            Thread.sleep(GameServer.TIME_TICK);
+
+
+        //closing votes
+        voter.closeVote();
+
+
+        try{
+            int index = preResults.take();
+            if(index <= 0 || index > options.size())
+                return null;
+
+            return options.get(index - 1);
+
+        } catch (InterruptedException | IndexOutOfBoundsException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+    public ServerWorker inspectorVote() throws IOException, InterruptedException {
+        ArrayList<ServerWorker> options = new ArrayList<>();
+        ArrayList<String> optionsString = new ArrayList<>();
+
+        ServerWorker voter = server.getWorkerHandler().findWorker(Group.City, Type.Inspector);
+        if(voter == null || voter.isDead())
+            return null;
+
+        for(ServerWorker worker : server.getWorkerHandler().getWorkers())
+            if(!worker.isDead() && worker != voter) {
+                options.add(worker);
+                optionsString.add(worker.getUserName());
+            }
+
+        ArrayBlockingQueue<Integer> preResults = new ArrayBlockingQueue<>(1);
+
+        String voteBody = "Choose the person you want to inspect tonight";
+
+
+        // starting votes
+        voter.getVote(voteBody, GameServer.INSPECT_TIME, optionsString, preResults);
+
+
+        // waiting to vote...
+        for(int i = 0; i < GameServer.INSPECT_TIME/GameServer.TIME_TICK && !voter.hasVoted(); i++)
             Thread.sleep(GameServer.TIME_TICK);
 
 

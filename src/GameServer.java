@@ -4,7 +4,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 public class GameServer extends Thread{
-    public static final int PLAYER_COUNT = 3;
+    public static final int PLAYER_COUNT = 4;
     public static final String SERVER_NAME = "GOD";
     public static final String SLEEP = "SLEEP";
     public static final String WAKEUP = "WAKEUP";
@@ -108,11 +108,11 @@ public class GameServer extends Thread{
 
         //workers.getWorkers().get(2).giveRole(Group.City, Type.Mayor);
         workers.getWorkers().get(2).giveRole(Group.City, Type.Doctor);
+        workers.getWorkers().get(3).giveRole(Group.City, Type.Inspector);
 
         /*
         workers.getWorkers().get(2).giveRole(Group.Mafia, Type.OrdMafia);
 
-        workers.getWorkers().get(4).giveRole(Group.City, Type.Inspector);
         workers.getWorkers().get(5).giveRole(Group.City, Type.Sniper);
         workers.getWorkers().get(6).giveRole(Group.City, Type.Mayor);
         workers.getWorkers().get(7).giveRole(Group.City, Type.Psycho);
@@ -160,6 +160,7 @@ public class GameServer extends Thread{
 
         // preparations
         workers.prepareNight();
+        nightNews.clear();
         firstNight = false;
         ServerWorker mafiaShoot = null;
         ServerWorker mafiaHeal = null;
@@ -226,12 +227,44 @@ public class GameServer extends Thread{
             System.err.println("DOCTOR HEAL: " + doctorHeal.getUserName());
         /////////////
 
+        Thread.sleep(1500);
+
+        // wakeup Inspector
+        ServerWorker inspector = workers.findWorker(Group.City, Type.Inspector);
+        if(inspector != null && !inspector.isDead()){
+            workers.wakeUpWorker(inspector);
+
+            ServerWorker inspected = voter.inspectorVote();
+
+            if(inspected == null){
+                System.err.println("NO ONE TO INSPECT");
+
+            } else if(inspected.getType() == Type.GodFather || inspected.getGroup() == Group.City){
+                inspector.sendMsgToClient(serverMsgFromString("inspected is CITY"));
+
+            } else {
+                inspector.sendMsgToClient(serverMsgFromString("inspected is MAFIA"));
+
+            }
+
+            workers.sleepWorker(inspector);
+        }
+
+        Thread.sleep(1500);
+
+        // wakeup Sniper
+
+
+
 
         // affecting night votes:
         if(mafiaShoot != null && mafiaShoot != doctorHeal){
             mafiaShoot.kill();
             nightNews.add(mafiaShoot.getUserName() + " was killed last night.");
         }
+
+        // add mafiaHeal
+
     }
 
 

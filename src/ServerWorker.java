@@ -184,7 +184,7 @@ public class ServerWorker extends Thread{
         System.out.println(userName + " is now asleep.");
     }
 
-    public void sendMsg(String toSend) throws IOException {
+    public void sendMsgToClient(String toSend) throws IOException {
         if(!toSend.endsWith("\n"))
             toSend += "\n";
         outputStream.write(toSend.getBytes());
