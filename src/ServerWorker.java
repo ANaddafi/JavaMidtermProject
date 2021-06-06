@@ -199,7 +199,7 @@ public class ServerWorker extends Thread{
 
         //server.sendMsgToAllAwake(toSend);
         if(!isDead)
-            server.sendMsgToAllAwake(toSend, this);
+            server.getWorkerHandler().msgToAllAwake(toSend, this);
         else
             sendErr("You can't chat because you are DEAD");
     }
@@ -239,6 +239,11 @@ public class ServerWorker extends Thread{
 
     public void kill() throws IOException {
         isDead = true;
+        isSleep = false;
         outputStream.write((GameServer.DEAD + "\n").getBytes());
+    }
+
+    public String getRoleString() {
+        return group.toString() + ":" + type.toString();
     }
 }

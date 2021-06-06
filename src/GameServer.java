@@ -46,16 +46,12 @@ public class GameServer extends Thread{
 
     private final int port;
 
-    private final ArrayList<ServerWorker> workers;
-    private final ArrayList<ServerWorker> mafias;
-    private final ArrayList<ServerWorker> citizens;
+    private final WorkerHandler workers;
     private final Voter voter;
 
     public GameServer(int port){
         this.port = port;
-        workers = new ArrayList<>();
-        mafias = new ArrayList<>();
-        citizens = new ArrayList<>();
+        workers = new WorkerHandler();
         voter = new Voter(this);
 
         drLectorSelfHeal = 0;
@@ -67,7 +63,7 @@ public class GameServer extends Thread{
     public boolean hasUserName(String userName) {
         boolean hasUserName = false;
 
-        for(ServerWorker worker : workers)
+        for(ServerWorker worker : workers.getWorkers())
             if(worker.getUserName() != null)
                 hasUserName |= worker.getUserName().equals(userName);
 
@@ -82,7 +78,7 @@ public class GameServer extends Thread{
             for(int i = 0; i < PLAYER_COUNT; i++){
                 Socket clientSocket = serverSocket.accept();
                 ServerWorker worker = new ServerWorker(clientSocket, this);
-                workers.add(worker);
+                workers.addWorker(worker);
                 worker.start();
             }
 
@@ -103,41 +99,24 @@ public class GameServer extends Thread{
     }
 
     private boolean giveRoles() {
-        if(workers.size() != PLAYER_COUNT)
+        if(workers.count() != PLAYER_COUNT)
             return false;
 
-        // Mafias:
-        workers.get(0).giveRole(Group.Mafia, Type.GodFather);
-        mafias.add(workers.get(0));
+        workers.getWorkers().get(0).giveRole(Group.Mafia, Type.GodFather);
+        // workers.getWorkers().get(1).giveRole(Group.Mafia, Type.DrLector);
 
-        /*workers.get(1).giveRole(Group.Mafia, Type.DrLector);
-        mafias.add(workers.get(1));*/
-
-        workers.get(1).giveRole(Group.City, Type.Mayor);
-        citizens.add(workers.get(1));
+        workers.getWorkers().get(1).giveRole(Group.City, Type.Mayor);
 
         /*
-        workers.get(2).giveRole(Group.Mafia, Type.OrdMafia);
+        workers.getWorkers().get(2).giveRole(Group.Mafia, Type.OrdMafia);
 
-        mafias.add(workers.get(2));
-
-        // Citizens:
-        workers.get(3).giveRole(Group.City, Type.Doctor);
-        workers.get(4).giveRole(Group.City, Type.Inspector);
-        workers.get(5).giveRole(Group.City, Type.Sniper);
-        workers.get(6).giveRole(Group.City, Type.Mayor);
-        workers.get(7).giveRole(Group.City, Type.Psycho);
-        workers.get(8).giveRole(Group.City, Type.Strong);
-        workers.get(9).giveRole(Group.City, Type.OrdCity);
-
-        citizens.add(workers.get(3));
-        citizens.add(workers.get(4));
-        citizens.add(workers.get(5));
-        citizens.add(workers.get(6));
-        citizens.add(workers.get(7));
-        citizens.add(workers.get(8));
-        citizens.add(workers.get(9));
-
+        workers.getWorkers().get(3).giveRole(Group.City, Type.Doctor);
+        workers.getWorkers().get(4).giveRole(Group.City, Type.Inspector);
+        workers.getWorkers().get(5).giveRole(Group.City, Type.Sniper);
+        workers.getWorkers().get(6).giveRole(Group.City, Type.Mayor);
+        workers.getWorkers().get(7).giveRole(Group.City, Type.Psycho);
+        workers.getWorkers().get(8).giveRole(Group.City, Type.Strong);
+        workers.getWorkers().get(9).giveRole(Group.City, Type.OrdCity);
          */
 
         return true;
@@ -148,7 +127,7 @@ public class GameServer extends Thread{
 
         // Intro (Night #1)
         System.out.println("INTRO BEGINS");
-        for(ServerWorker worker : workers){
+        for(ServerWorker worker : workers.getWorkers()){
             worker.sendRole();
         }
 
@@ -159,6 +138,8 @@ public class GameServer extends Thread{
             handleDay();
 
             Thread.sleep(3000);
+            if(gameIsFinished() && !DEBUG)
+                break;
 
             handleNight();
 
@@ -175,15 +156,9 @@ public class GameServer extends Thread{
         System.out.println("ITS NIGHT");
 
         // preparations
-        prepareNight();
+        workers.prepareNight();
 
         Thread.sleep(10 * 1000);
-    }
-
-    private void prepareNight() throws IOException {
-        for(ServerWorker worker : workers)
-            if(!worker.isDead())
-                worker.NightReset();
     }
 
     private void handleDay() throws IOException, InterruptedException {
@@ -191,12 +166,12 @@ public class GameServer extends Thread{
         System.out.println("IT'S DAY");
 
         // preparations
-        wakeUpAll();
+        workers.wakeUpAll();
 
         // discussion
         for(int i = 0; i < DAY_TIME/TIME_TICK; i++){
             Thread.sleep(TIME_TICK);
-            if(allReady())
+            if(workers.allReady())
                 break;
         }
 
@@ -206,93 +181,62 @@ public class GameServer extends Thread{
         ServerWorker dayVoteWinner = voter.dayVote();
 
         // Mayor vote
-        System.out.println("MAYOR VOTE");
+        boolean doTheKill = dayVoteWinner != null;
+        ServerWorker mayor = workers.findWorker(Group.City, Type.Mayor);
 
-        if(dayVoteWinner != null)
-            sendMsgToAllAwake(serverMsgFromString("Waiting for Mayors decision..."), findWorker(Group.City, Type.Mayor));
+        if(dayVoteWinner != null && mayor != null && !mayor.isDead()) {
+            System.out.println("MAYOR VOTE");
 
-        boolean doTheKill = dayVoteWinner != null && voter.mayorVote(dayVoteWinner.getUserName());
+            workers.msgToAllAwake(serverMsgFromString("Waiting for Mayors decision..."), mayor);
+
+            doTheKill = voter.mayorVote(dayVoteWinner.getUserName());
+        }
 
         if(doTheKill){
-            System.err.println("MAYOR SAID TO DO THE KILL!");
+            // DEBUG LOG
+            if(mayor != null && !mayor.isDead())
+                System.err.println("MAYOR SAID TO DO THE KILL!");
+            else
+                System.err.println("NO MAYOR!");
 
-            sendMsgToAllAwake(serverMsgFromString("Today " + dayVoteWinner.getUserName() + " is going to die!"));
+            workers.msgToAllAwake(serverMsgFromString("Today " + dayVoteWinner.getUserName() + " is going to die!"));
+            workers.msgToAllAwake(serverMsgFromString("He/She was " + dayVoteWinner.getRoleString()));
 
             // DO THE KILL!
             dayVoteWinner.kill();
 
         } else {
-            System.err.println("MAYOR SAID DONT DO THE KILL!");
+            // DEBUG LOG
+            if(mayor != null && !mayor.isDead())
+                System.err.println("MAYOR SAID DONT DO THE KILL!");
+            else
+                System.err.println("NO MAYOR");
 
-            sendMsgToAllAwake(serverMsgFromString("No one is going to die today!"));
+            workers.msgToAllAwake(serverMsgFromString("No one is going to die today!"));
         }
 
         System.out.println("DAY FINISHED");
     }
 
-    private boolean allReady() {
-        boolean ready = true;
-        for(ServerWorker worker : workers)
-            ready &= worker.isDead() || worker.isMute() || worker.isReady();
-
-        return ready;
-    }
-
-    /*private void goSleepAll() throws IOException {
-        for(ServerWorker worker : workers)
-            worker.goSleep();
-    }*/
-
-    private void wakeUpAll() throws IOException {
-        for(ServerWorker worker : workers)
-            if(!worker.isDead())
-                worker.wakeUp();
-    }
-
     private boolean gameIsFinished() {
-        return mafias.isEmpty() || mafias.size() >= citizens.size();
+        return workers.mafiaCount() == 0 || workers.mafiaCount() >= workers.cityCount();
     }
 
     private void waitForLogin() throws InterruptedException {
-        boolean allLoggedIn;
-        do{
-            allLoggedIn = true;
-            for(ServerWorker worker : workers)
-                if(worker.getUserName() == null)
-                    allLoggedIn = false;
-
+        while (!workers.allLoggedIn())
             Thread.sleep(500);
-        } while (!allLoggedIn);
     }
 
     public ArrayList<ServerWorker> getWorkers() {
+        return workers.getWorkers();
+    }
+
+    public WorkerHandler getWorkerHandler(){
         return workers;
     }
 
-    public void sendMsgToAllAwake(String toSend) throws IOException {
-        for(ServerWorker worker : workers)
-            if(!worker.isSleep()){
-                worker.sendMsg(toSend);
-            }
-    }
-    public void sendMsgToAllAwake(String toSend, ServerWorker except) throws IOException {
-        for(ServerWorker worker : workers)
-            if(worker != except && !worker.isSleep()){
-                worker.sendMsg(toSend);
-            }
-    }
-
-    // when playing with 10 players, there is exactly on of each type
-    public ServerWorker findWorker(Group group, Type type) {
-        for(ServerWorker worker : workers)
-            if(worker.getGroup() == group && worker.getType() == type)
-                return worker;
-
-        return null;
-    }
-
     public String serverMsgFromString(String body){
-        return GameServer.MSG + " " + GameServer.SERVER_NAME + " " + body + "\n";
+        return msgFromString(SERVER_NAME, body);
     }
 
     public String msgFromString(String sender, String body){

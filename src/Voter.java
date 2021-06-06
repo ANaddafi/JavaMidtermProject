@@ -1,9 +1,6 @@
-import com.sun.istack.internal.NotNull;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class Voter {
@@ -82,9 +79,9 @@ public class Voter {
         if(userNameToKill == null)
             return false;
 
-        ServerWorker mayor = server.findWorker(Group.City, Type.Mayor);
+        ServerWorker mayor = server.getWorkerHandler().findWorker(Group.City, Type.Mayor);
         if(mayor == null || mayor.isDead())
-            return false;
+            return true;
 
         // preparing vote
         ArrayList<String> options = new ArrayList<>();
