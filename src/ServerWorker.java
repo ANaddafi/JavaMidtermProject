@@ -10,10 +10,11 @@ public class ServerWorker extends Thread{
     private BufferedReader bufferedReader;
     private GameServer server;
 
-    private ArrayBlockingQueue<Integer> voteResults;
+    private int theVote;
     private int voteSize;
     private boolean hasVoted;
     private boolean isVoting;
+    private boolean recVote;
 
     private String userName; // surely just one word
     private Group group;
@@ -33,6 +34,8 @@ public class ServerWorker extends Thread{
         isReady = false;
         isVoting = false;
         hasVoted = false;
+        recVote = false;
+        theVote = 0;
     }
 
     public void giveRole(Group group, Type type){
@@ -95,6 +98,12 @@ public class ServerWorker extends Thread{
 
         } catch (IOException e) {
             e.printStackTrace();
+            System.err.println(userName + " LEFT");
+            try {
+                kill();
+            } catch (IOException ex) {
+                System.err.println("~");
+            }
         }
     }
 
@@ -119,7 +128,7 @@ public class ServerWorker extends Thread{
                         sendMsgToAllAwake(line);
 
                 } else if (GameServer.VOTE.equals(cmd)){
-                    if(!isVoting || hasVoted || isMute){
+                    if(!isVoting || hasVoted){
                         sendErr("You can't vote at the moment");
                         // TODO TELL WHY
                     }else if(tokens.length != 2 || !isNumber(tokens[1]))
@@ -132,16 +141,6 @@ public class ServerWorker extends Thread{
                 }
             }
         }
-    }
-
-    private void checkVote(String vote) throws IOException {
-        int voteIndex = Integer.parseInt(vote);
-        if(voteIndex > 0 && voteIndex <= voteSize && !hasVoted) {
-            hasVoted = true;
-            voteResults.add(voteIndex);
-            sendErr("OK");
-        } else
-            sendErr("Enter a valid number");
     }
 
     private boolean isNumber(String str) {
@@ -197,8 +196,32 @@ public class ServerWorker extends Thread{
             sendErr("You can't chat because you are DEAD");
     }
 
-    public void getVote(String voteBody, int voteTime, ArrayList<String> options,
-                        ArrayBlockingQueue<Integer> results) throws IOException {
+    public int catchVote(){
+        /*if(!recVote){
+            recVote = true;
+            int voteToSend = theVote;
+            theVote = 0;
+
+            return voteToSend;
+        }*/
+
+        int voteToSend = theVote;
+        theVote = 0;
+
+        return voteToSend;
+    }
+
+    private void checkVote(String vote) throws IOException {
+        int voteIndex = Integer.parseInt(vote);
+        if(voteIndex > 0 && voteIndex <= voteSize && !hasVoted) {
+            hasVoted = true;
+            theVote = voteIndex;
+            sendErr("OK");
+        } else
+            sendErr("Enter a valid number");
+    }
+
+    public void getVote(String voteBody, int voteTime, ArrayList<String> options) throws IOException {
 
         String optionBody = "";
         int cnt = 1;
@@ -210,14 +233,14 @@ public class ServerWorker extends Thread{
 
         isVoting = true;
         hasVoted = false;
-        voteResults = results;
+        recVote = false;
+        theVote = 0;
         voteSize = options.size();
     }
 
     public void closeVote() throws IOException {
         isVoting = false;
         hasVoted = false;
-        voteResults = null;
         voteSize = 0;
 
         String toSend = GameServer.TIMEOUT + "\n";
@@ -229,6 +252,7 @@ public class ServerWorker extends Thread{
             return;
 
         hasVoted = false;
+        recVote = false;
         isReady = false;
         isMute = false;
         goSleep();
