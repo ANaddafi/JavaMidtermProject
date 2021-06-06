@@ -80,6 +80,10 @@ public class Client {
 
                             } else if (GameServer.TIMEOUT.equals(cmd)) {
                                 isVoting = false;
+                            } else if (GameServer.DEAD.equals(cmd)){
+                                isDead = true;
+                                System.err.println("You are DEAD! You can still see other players chats.");
+
                             } else {
                                 System.out.println("Unknown command <" + cmd + ">");
                             }

@@ -83,7 +83,7 @@ public class Voter {
             return false;
 
         ServerWorker mayor = server.findWorker(Group.City, Type.Mayor);
-        if(mayor == null)
+        if(mayor == null || mayor.isDead())
             return false;
 
         // preparing vote

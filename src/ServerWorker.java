@@ -198,7 +198,10 @@ public class ServerWorker extends Thread{
             }*/
 
         //server.sendMsgToAllAwake(toSend);
-        server.sendMsgToAllAwake(toSend, this);
+        if(!isDead)
+            server.sendMsgToAllAwake(toSend, this);
+        else
+            sendErr("You can't chat because you are DEAD");
     }
 
     public void getVote(String voteBody, int voteTime, ArrayList<String> options,
@@ -234,7 +237,8 @@ public class ServerWorker extends Thread{
         goSleep();
     }
 
-    public void kill() {
+    public void kill() throws IOException {
         isDead = true;
+        outputStream.write((GameServer.DEAD + "\n").getBytes());
     }
 }

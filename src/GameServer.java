@@ -18,6 +18,7 @@ public class GameServer extends Thread{
     public static final String ERR = "ERR";
     public static final String TIMEOUT = "TIMEOUT";
     public static final String READY = "READY";
+    public static final String DEAD = "DEAD";
 
 
     // time in milli second
@@ -219,9 +220,7 @@ public class GameServer extends Thread{
 
             // DO THE KILL!
             dayVoteWinner.kill();
-            // TODO CHECK: DEAD SHOULD NOT TALK, BUT SHOULD LISTEN,
-            //  SHOULD RECEIVE PROPER SENTENCES, NOT LIKE OTHERS,
-            //  MAYBE A NEW METHOD FOR THAT?
+
         } else {
             System.err.println("MAYOR SAID DONT DO THE KILL!");
 
@@ -234,7 +233,7 @@ public class GameServer extends Thread{
     private boolean allReady() {
         boolean ready = true;
         for(ServerWorker worker : workers)
-            ready &= worker.isReady();
+            ready &= worker.isDead() || worker.isMute() || worker.isReady();
 
         return ready;
     }
@@ -246,7 +245,8 @@ public class GameServer extends Thread{
 
     private void wakeUpAll() throws IOException {
         for(ServerWorker worker : workers)
-            worker.wakeUp();
+            if(!worker.isDead())
+                worker.wakeUp();
     }
 
     private boolean gameIsFinished() {
@@ -271,13 +271,13 @@ public class GameServer extends Thread{
 
     public void sendMsgToAllAwake(String toSend) throws IOException {
         for(ServerWorker worker : workers)
-            if(!worker.isDead() && !worker.isSleep()){
+            if(!worker.isSleep()){
                 worker.sendMsg(toSend);
             }
     }
     public void sendMsgToAllAwake(String toSend, ServerWorker except) throws IOException {
         for(ServerWorker worker : workers)
-            if(worker != except && !worker.isDead() && !worker.isSleep()){
+            if(worker != except && !worker.isSleep()){
                 worker.sendMsg(toSend);
             }
     }
