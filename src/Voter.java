@@ -1,7 +1,6 @@
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.ArrayBlockingQueue;
 
 public class Voter {
     private GameServer server;
@@ -11,7 +10,8 @@ public class Voter {
     }
 
 
-    // TODO SKIP OPTION
+    // TODO SKIP OPTION : JUST ADD A 'SKIP' IN OPTIONSTRING AND DONT DO IT IN 'OPTIONS'
+    //  SO THE METHOD RETURN NULL!
     public ServerWorker dayVote() throws InterruptedException, IOException {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
@@ -322,6 +322,7 @@ public class Voter {
     }
 
 
+    // TODO SKIP
     public ServerWorker sniperVote() throws IOException, InterruptedException {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
@@ -362,6 +363,76 @@ public class Voter {
         }
     }
 
+
+    // TODO SKIP
+    public ServerWorker psychoVote() throws IOException, InterruptedException {
+        ArrayList<ServerWorker> options = new ArrayList<>();
+        ArrayList<String> optionsString = new ArrayList<>();
+
+        ServerWorker voter = server.getWorkerHandler().findWorker(Group.City, Type.Psycho);
+        if(voter == null || voter.isDead())
+            return null;
+
+        for(ServerWorker worker : server.getWorkerHandler().getWorkers())
+            if(!worker.isDead() && worker != voter) {
+                options.add(worker);
+                optionsString.add(worker.getUserName());
+            }
+
+        String voteBody = "Choose the person you want to mute for next day";
+
+
+        // starting votes
+        voter.getVote(voteBody, GameServer.PSYCHO_TIME, optionsString);
+
+
+        // waiting to vote...
+        for(int i = 0; i < GameServer.PSYCHO_TIME/GameServer.TIME_TICK && !voter.hasVoted(); i++)
+            Thread.sleep(GameServer.TIME_TICK);
+
+
+        //closing votes
+        voter.closeVote();
+
+
+        try{
+            int index = voter.catchVote();
+            return options.get(index - 1);
+
+        } catch (IndexOutOfBoundsException e){
+            // e.printStackTrace();
+            return null;
+        }
+    }
+
+    public boolean strongVote() throws IOException, InterruptedException {
+
+        ServerWorker voter = server.getWorkerHandler().findWorker(Group.City, Type.Strong);
+        if(voter == null || voter.isDead())
+            return true;
+
+        // preparing vote
+        ArrayList<String> options = new ArrayList<>();
+        options.add("Yes");
+        options.add("No");
+
+        String voteBody = "Do you want to get the dead log? (you can do it 2 times at all)";
+
+        // voting
+        voter.getVote(voteBody, GameServer.STRONG_TIME, options);
+
+        // waiting to vote...
+        for(int i = 0; i < GameServer.STRONG_TIME/GameServer.TIME_TICK && !voter.hasVoted(); i++)
+            Thread.sleep(GameServer.TIME_TICK);
+
+        // closing the vote
+        voter.closeVote();
+
+        // getting vote
+        int result = voter.catchVote();
+        return result == 1; // never get log, except when he says YES
+
+    }
 
     private boolean hasAllVoted(ArrayList<ServerWorker> voters) {
         boolean hasVoted = true;

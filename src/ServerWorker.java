@@ -112,19 +112,22 @@ public class ServerWorker extends Thread{
         while( (line = bufferedReader.readLine()) != null){
             String[] tokens = line.split(" ");
 
-            if(tokens.length > 0){
+            if(isDead){
+                sendErr("You are DEAD!");
+
+            } else if(tokens.length > 0){
                 String cmd = tokens[0];
 
                 if (GameServer.MSG.equals(cmd)){
                     if(isSleep)
                         sendErr("You are currently ASLEEP!");
-                    else if(isMute)
-                        sendErr("You are currently MUTE!");
                     else if(tokens.length == 3 && tokens[2].equalsIgnoreCase(GameServer.READY)){
                         isReady = true;
                         sendErr("You're ready for voting!");
 
-                    } else
+                    } else if(isMute)
+                        sendErr("You are currently MUTE!");
+                     else
                         sendMsgToAllAwake(line);
 
                 } else if (GameServer.VOTE.equals(cmd)){
@@ -266,5 +269,9 @@ public class ServerWorker extends Thread{
 
     public String getRoleString() {
         return group.toString() + ":" + type.toString();
+    }
+
+    public void makeMute() {
+        isMute = true;
     }
 }

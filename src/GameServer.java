@@ -4,7 +4,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 public class GameServer extends Thread{
-    public static final int PLAYER_COUNT = 4;
+    public static final int PLAYER_COUNT = 3;
     public static final String SERVER_NAME = "GOD";
     public static final String SLEEP = "SLEEP";
     public static final String WAKEUP = "WAKEUP";
@@ -23,13 +23,13 @@ public class GameServer extends Thread{
     public static final int NIGHT_SPLIT_TIME = 2 * 1000;
     public static final int MAYOR_VOTE_TIME = 10 * 1000;
     public static final int MAFIA_TALK_TIME = 30 * 1000;
-    public static final int MAFIA_KILL_TIME = 10 * 1000;
-    public static final int MAFIA_HEAL_TIME = 10 * 1000;
-    public static final int DR_HEAL_TIME = 10 * 1000;
-    public static final int INSPECT_TIME = 10 * 1000;
-    public static final int SNIPE_TIME = 10 * 1000;
-    public static final int PSYCHO_TIME = 10 * 1000;
-    public static final int STRONG_TIME = 10 * 100;
+    public static final int MAFIA_KILL_TIME = 20 * 1000;
+    public static final int MAFIA_HEAL_TIME = 20 * 1000;
+    public static final int DR_HEAL_TIME = 20 * 1000;
+    public static final int INSPECT_TIME = 20 * 1000;
+    public static final int SNIPE_TIME = 20 * 1000;
+    public static final int PSYCHO_TIME = 20 * 1000;
+    public static final int STRONG_TIME = 20 * 1000;
 
 
     public int drLectorSelfHeal;
@@ -108,16 +108,16 @@ public class GameServer extends Thread{
         workers.getWorkers().get(1).giveRole(Group.Mafia, Type.DrLector);
 
         //workers.getWorkers().get(2).giveRole(Group.City, Type.Mayor);
-        workers.getWorkers().get(2).giveRole(Group.City, Type.Doctor);
+        //workers.getWorkers().get(2).giveRole(Group.City, Type.Doctor);
         //workers.getWorkers().get(2).giveRole(Group.City, Type.Inspector);
-        workers.getWorkers().get(3).giveRole(Group.City, Type.Sniper);
+        //workers.getWorkers().get(3).giveRole(Group.City, Type.Sniper);
+
+        //workers.getWorkers().get(2).giveRole(Group.City, Type.Psycho);
+        workers.getWorkers().get(2).giveRole(Group.City, Type.Strong);
 
         /*
         workers.getWorkers().get(2).giveRole(Group.Mafia, Type.OrdMafia);
 
-        workers.getWorkers().get(6).giveRole(Group.City, Type.Mayor);
-        workers.getWorkers().get(7).giveRole(Group.City, Type.Psycho);
-        workers.getWorkers().get(8).giveRole(Group.City, Type.Strong);
         workers.getWorkers().get(9).giveRole(Group.City, Type.OrdCity);
          */
 
@@ -168,7 +168,7 @@ public class GameServer extends Thread{
         ServerWorker doctorHeal = null;
         ServerWorker sniperShoot = null;
         ServerWorker psychoMute = null;
-        boolean strongQuery = false;
+        boolean strongGetQuery = false;
 
         // wakeup Mafias
         workers.wakeUpList(workers.getMafias());
@@ -279,12 +279,63 @@ public class GameServer extends Thread{
 
         // wakeup Psycho
 
+        ServerWorker psycho = workers.findWorker(Group.City, Type.Psycho);
+        if(psycho != null && !psycho.isDead()){
+            workers.wakeUpWorker(psycho);
 
+            psychoMute = voter.psychoVote();
+
+            workers.sleepWorker(psycho);
+        }
+
+        // DEBUG LOG
+        if(psychoMute == null)
+            System.err.println("NO PSYCHO MUTE TONIGHT");
+        else
+            System.err.println("PSYCHO MUTE: " + psychoMute.getUserName());
+        /////////////
+
+        Thread.sleep(NIGHT_SPLIT_TIME);
+
+        // TODO TEST STRONG
+
+        // wakeup Strong
+
+        ServerWorker strong = workers.findWorker(Group.City, Type.Strong);
+
+        if(strongQuery < 2) {
+
+            if (strong != null && !strong.isDead()) {
+                workers.wakeUpWorker(strong);
+
+                strongGetQuery = voter.strongVote();
+
+                if(strongGetQuery)
+                    strongQuery++;
+
+                workers.sleepWorker(strong);
+            }
+        }
+
+        // DEBUG LOG
+        if(!strongGetQuery)
+            System.err.println("NO STRONG QUERY TONIGHT");
+        else
+            System.err.println("STRONG QUERY: " + strongQuery);
+        /////////////
+
+        Thread.sleep(NIGHT_SPLIT_TIME);
 
         // affecting night votes:
         if(mafiaShoot != null && mafiaShoot != doctorHeal){
-            mafiaShoot.kill();
-            nightNews.add(mafiaShoot.getUserName() + " was killed last night.");
+
+            if(mafiaShoot == strong && strongSurvived < 1){
+                strongSurvived ++;
+            } else {
+                mafiaShoot.kill();
+                nightNews.add(mafiaShoot.getUserName() + " was killed last night.");
+            }
+
         }
 
         if(sniperShoot != null && sniperShoot != doctorHeal && sniperShoot != mafiaHeal){
@@ -292,10 +343,27 @@ public class GameServer extends Thread{
             nightNews.add(sniperShoot.getUserName() + " was killed last night.");
         }
 
-        // add mafiaHeal
+        if(strongGetQuery)
+            nightNews.add(getQuery());
 
+        if(psychoMute != null)
+            psychoMute.makeMute();
 
         System.out.println("NIGHT FINISHED");
+    }
+
+    private String getQuery() {
+        int cityDead = 0, mafiaDead = 0;
+
+        for(ServerWorker worker : workers.getWorkers())
+            if(worker.isDead()){
+                if(worker.getGroup() == Group.City)
+                    cityDead ++;
+                else
+                    mafiaDead ++;
+            }
+
+        return "We have lost " + cityDead + " citizens and " + mafiaDead + " mafias so far.";
     }
 
 
