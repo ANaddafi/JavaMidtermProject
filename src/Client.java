@@ -86,6 +86,10 @@ public class Client {
                                 isDead = true;
                                 System.err.println("You are DEAD! You can still see other players chats.");
 
+                            } else if (GameServer.MUTE.equals(cmd)){
+                                isMute = true;
+                                System.err.println("You are MUTE for today!");
+
                             } else {
                                 System.out.println("Unknown command <" + cmd + ">");
                             }

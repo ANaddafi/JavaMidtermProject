@@ -22,7 +22,7 @@ public class ServerWorker extends Thread{
 
     private boolean isDead;
     private boolean isSleep;
-    private boolean isMute;
+    private boolean isMute; // TODO TELL CLIENT THAT HES MUTE NOW!
     private boolean isReady;
 
     public ServerWorker(Socket connectionSocket, GameServer server){
@@ -97,13 +97,9 @@ public class ServerWorker extends Thread{
             handleClientInput();
 
         } catch (IOException e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             System.err.println(userName + " LEFT");
-            try {
-                kill();
-            } catch (IOException ex) {
-                System.err.println("~");
-            }
+            isDead = true;
         }
     }
 
@@ -271,7 +267,8 @@ public class ServerWorker extends Thread{
         return group.toString() + ":" + type.toString();
     }
 
-    public void makeMute() {
+    public void makeMute() throws IOException {
         isMute = true;
+        sendMsgToClient(GameServer.MUTE);
     }
 }
