@@ -10,8 +10,7 @@ public class Voter {
     }
 
 
-    // TODO SKIP OPTION : JUST ADD A 'SKIP' IN OPTIONSTRING AND DONT DO IT IN 'OPTIONS'
-    //  SO THE METHOD RETURN NULL!
+    // TODO CHECK & DEBUG : SKIP OPTION
     public ServerWorker dayVote() throws InterruptedException, IOException {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
@@ -21,6 +20,9 @@ public class Voter {
                 options.add(worker);
                 optionsString.add(worker.getUserName());
             }
+
+        options.add(null);
+        optionsString.add("Skip");
 
 
         String voteBody = "Choose the one you think is Mafia";
@@ -53,10 +55,12 @@ public class Voter {
 
         ServerWorker winner = null;
         int mostVotes = 0;
+        int skipped = 0;
 
         HashMap<ServerWorker, Integer> resultCount = new HashMap<>();
         for(ServerWorker worker : options)
-            resultCount.put(worker, 0);
+            if(worker != null)
+                resultCount.put(worker, 0);
 
         for(ServerWorker worker : voters){
             // one can not vote himself
@@ -65,7 +69,9 @@ public class Voter {
                 options.remove(indexOfUserName);
 
             int vote = worker.catchVote();
-            if(vote != 0){
+
+            if(vote != 0 && vote != options.size()){
+
                 ServerWorker voted = options.get(vote - 1);
                 resultCount.replace(voted, resultCount.get(voted) + 1);
 
@@ -75,6 +81,8 @@ public class Voter {
                     );
 
             } else {
+
+                skipped ++;
                 server.getWorkerHandler().msgToAllAwake(
                         server.serverMsgFromString(worker.getUserName() + " skipped voting")
                         /*,worker*/
@@ -86,7 +94,7 @@ public class Voter {
         }
 
         for(ServerWorker worker : options)
-            if(mostVotes < resultCount.get(worker)){
+            if(worker != null && mostVotes < resultCount.get(worker)){
                 mostVotes = resultCount.get(worker);
                 winner = worker;
             }
@@ -94,9 +102,12 @@ public class Voter {
         int winnerCount = 0;
         if(mostVotes != 0){
             for(ServerWorker worker : options)
-                if(resultCount.get(worker) == mostVotes)
+                if(worker != null && resultCount.get(worker) == mostVotes)
                     winnerCount++;
         }
+
+        if(mostVotes <= skipped)
+            winner = null;
 
         return winnerCount != 1 ? null : winner;
     }
