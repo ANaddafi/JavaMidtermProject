@@ -24,6 +24,7 @@ public class ServerWorker extends Thread{
     private boolean isSleep;
     private boolean isMute; // TODO TELL CLIENT THAT HES MUTE NOW!
     private boolean isReady;
+    private boolean isStart;
 
     public ServerWorker(Socket connectionSocket, GameServer server){
         this.connectionSocket = connectionSocket;
@@ -32,6 +33,7 @@ public class ServerWorker extends Thread{
         isSleep = true;
         isMute = false;
         isReady = false;
+        isStart = false;
         isVoting = false;
         hasVoted = false;
         recVote = false;
@@ -57,6 +59,10 @@ public class ServerWorker extends Thread{
 
     public boolean isMute() {
         return isMute;
+    }
+
+    public boolean isStart() {
+        return isStart;
     }
 
     public boolean hasVoted() {
@@ -115,11 +121,15 @@ public class ServerWorker extends Thread{
                 String cmd = tokens[0];
 
                 if (GameServer.MSG.equals(cmd)){
-                    if(isSleep)
+                    if(isSleep && isStart)
                         sendErr("You are currently ASLEEP!");
                     else if(tokens.length == 3 && tokens[2].equalsIgnoreCase(GameServer.READY)){
                         isReady = true;
                         sendErr("You're ready for voting!");
+
+                    } else if(tokens.length == 3 && tokens[2].equalsIgnoreCase(GameServer.START)){
+                        isStart = true;
+                        sendErr("STARTED");
 
                     } else if(isMute)
                         sendErr("You are currently MUTE!");

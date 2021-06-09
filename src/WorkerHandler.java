@@ -4,18 +4,6 @@ import java.util.ArrayList;
 public class WorkerHandler {
     private final ArrayList<ServerWorker> workers;
 
-    private ServerWorker godFather;
-    private ServerWorker drLector;
-    private ServerWorker ordMafia;
-
-    private ServerWorker mayor;
-    private ServerWorker doctor;
-    private ServerWorker inspector;
-    private ServerWorker sniper;
-    private ServerWorker psycho;
-    private ServerWorker strong;
-    private ServerWorker ordCity;
-
     public WorkerHandler(){
         workers = new ArrayList<>();
     }
@@ -32,19 +20,6 @@ public class WorkerHandler {
         return workers.size();
     }
 
-    public void initRoles(){
-        godFather = findWorker(Group.Mafia, Type.GodFather);
-        drLector = findWorker(Group.Mafia, Type.DrLector);
-        ordMafia = findWorker(Group.Mafia, Type.OrdMafia);
-
-        mayor = findWorker(Group.City, Type.Mayor);
-        doctor = findWorker(Group.City, Type.Doctor);
-        inspector = findWorker(Group.City, Type.Inspector);
-        sniper = findWorker(Group.City, Type.Sniper);
-        psycho = findWorker(Group.City, Type.Psycho);
-        strong = findWorker(Group.City, Type.Strong);
-        ordCity = findWorker(Group.City, Type.OrdCity);
-    }
 
     public ArrayList<ServerWorker> getMafias(){
         ArrayList<ServerWorker> mafias = new ArrayList<>();
@@ -75,6 +50,15 @@ public class WorkerHandler {
     public boolean allLoggedIn() {
         for(ServerWorker worker : workers)
             if (worker.getUserName() == null)
+                return false;
+
+        return true;
+    }
+
+
+    public boolean allStarted() {
+        for(ServerWorker worker : workers)
+            if (!worker.isStart())
                 return false;
 
         return true;
@@ -148,43 +132,8 @@ public class WorkerHandler {
             }
     }
 
-    public ServerWorker getGodFather() {
-        return godFather;
-    }
-
-    public ServerWorker getDrLector() {
-        return drLector;
-    }
-
-    public ServerWorker getOrdMafia() {
-        return ordMafia;
-    }
-
-    public ServerWorker getMayor() {
-        return mayor;
-    }
-
-    public ServerWorker getDoctor() {
-        return doctor;
-    }
-
-    public ServerWorker getInspector() {
-        return inspector;
-    }
-
-    public ServerWorker getSniper() {
-        return sniper;
-    }
-
-    public ServerWorker getPsycho() {
-        return psycho;
-    }
-
-    public ServerWorker getStrong() {
-        return strong;
-    }
-
-    public ServerWorker getOrdCity() {
-        return ordCity;
+    public void msgToAll(String toSend) throws IOException {
+        for(ServerWorker worker : workers)
+            worker.sendMsgToClient(toSend);
     }
 }

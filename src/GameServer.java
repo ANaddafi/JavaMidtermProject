@@ -15,14 +15,15 @@ public class GameServer extends Thread{
     public static final String READY = "READY";
     public static final String DEAD = "DEAD";
     public static final String MUTE = "MUTE";
+    public static final String START = "START";
 
 
     // time in milli second
     public static final int TIME_TICK = 1000;
-    public static final int DAY_TIME = 5 * 60 * 1000; // should be 5 mins
-    public static final int DAY_VOTE_TIME = 30 * 1000; // should be 30 secs
+    public static final int DAY_TIME = 5 * 60 * 1000;
+    public static final int DAY_VOTE_TIME = 30 * 1000;
     public static final int NIGHT_SPLIT_TIME = 2 * 1000;
-    public static final int MAYOR_VOTE_TIME = 10 * 1000;
+    public static final int MAYOR_VOTE_TIME = 20 * 1000;
     public static final int MAFIA_TALK_TIME = 30 * 1000;
     public static final int MAFIA_KILL_TIME = 20 * 1000;
     public static final int MAFIA_HEAL_TIME = 20 * 1000;
@@ -31,6 +32,18 @@ public class GameServer extends Thread{
     public static final int SNIPE_TIME = 20 * 1000;
     public static final int PSYCHO_TIME = 20 * 1000;
     public static final int STRONG_TIME = 20 * 1000;
+
+    private ServerWorker godFather;
+    private ServerWorker drLector;
+    private ServerWorker ordMafia;
+
+    private ServerWorker mayor;
+    private ServerWorker doctor;
+    private ServerWorker inspector;
+    private ServerWorker sniper;
+    private ServerWorker psycho;
+    private ServerWorker strong;
+    private ServerWorker ordCity;
 
 
     public int drLectorSelfHeal;
@@ -97,7 +110,12 @@ public class GameServer extends Thread{
 
     private boolean initGame() {
         firstNight = true;
-        return giveRoles();
+        if(giveRoles()){
+            initRoles();
+            return true;
+        }
+
+        return false;
     }
 
 
@@ -117,14 +135,32 @@ public class GameServer extends Thread{
         workers.getWorkers().get(8).giveRole(Group.City, Type.Strong);
         workers.getWorkers().get(9).giveRole(Group.City, Type.OrdCity);*/
 
-        workers.initRoles();
-
         return true;
+    }
+
+    public void initRoles(){
+        godFather = workers.findWorker(Group.Mafia, Type.GodFather);
+        drLector = workers.findWorker(Group.Mafia, Type.DrLector);
+        ordMafia = workers.findWorker(Group.Mafia, Type.OrdMafia);
+
+        mayor = workers.findWorker(Group.City, Type.Mayor);
+        doctor = workers.findWorker(Group.City, Type.Doctor);
+        inspector = workers.findWorker(Group.City, Type.Inspector);
+        sniper = workers.findWorker(Group.City, Type.Sniper);
+        psycho = workers.findWorker(Group.City, Type.Psycho);
+        strong = workers.findWorker(Group.City, Type.Strong);
+        ordCity = workers.findWorker(Group.City, Type.OrdCity);
     }
 
 
     private void startGame() throws IOException, InterruptedException {
         waitForLogin();
+        System.err.println("ALL LOGGED IN");
+
+        workers.msgToAll(serverMsgFromString("OK"));
+
+        waitForStart();
+        System.err.println("ALL START");
 
         // Intro (Night #1)
         System.out.println("INTRO BEGINS");
@@ -132,9 +168,9 @@ public class GameServer extends Thread{
             worker.sendRole();
 
         // tell mayor about doctor
-        if(workers.getMayor() != null && workers.getDoctor() != null)
-            workers.getMayor().sendMsgToClient(
-                    serverMsgFromString("-> City Doctor is " + workers.getDoctor().getUserName())
+        if(mayor != null && doctor != null)
+            mayor.sendMsgToClient(
+                    serverMsgFromString("-> City Doctor is " + doctor.getUserName())
             );
 
         // tell mafias about each other
@@ -166,7 +202,6 @@ public class GameServer extends Thread{
 
     }
 
-
     private void handleNight() throws IOException, InterruptedException {
         // NIGHT
         System.err.println("NIGHT");
@@ -190,6 +225,10 @@ public class GameServer extends Thread{
 
         mafiaShoot = voter.mafiaVote();
 
+        String tellMafia = (mafiaShoot == null ? "No one" : mafiaShoot.getUserName()) + " is shot by mafia tonight.";
+        for(ServerWorker mafia : workers.getMafias())
+            mafia.sendMsgToClient(serverMsgFromString(tellMafia));
+
         workers.sleepList(workers.getMafias());
 
         // DEBUG LOG
@@ -202,13 +241,17 @@ public class GameServer extends Thread{
         Thread.sleep(NIGHT_SPLIT_TIME);
 
         // wakeup drLector
-        ServerWorker drLector = workers.getDrLector();
         if(drLector != null && !drLector.isDead()) {
             workers.wakeUpWorker(drLector);
 
             mafiaHeal = voter.lectorVote(drLectorSelfHeal < 1);
             if(mafiaHeal == drLector)
                 drLectorSelfHeal++;
+
+
+            tellMafia = (mafiaHeal == null ? "No one" : mafiaHeal.getUserName()) + " is healed by drLector tonight.";
+            for(ServerWorker mafia : workers.getMafias())
+                mafia.sendMsgToClient(serverMsgFromString(tellMafia));
 
             workers.sleepWorker(drLector);
         }
@@ -223,7 +266,6 @@ public class GameServer extends Thread{
         Thread.sleep(NIGHT_SPLIT_TIME);
 
         // wakeup Doctor
-        ServerWorker doctor = workers.getDoctor();
         if(doctor != null && !doctor.isDead()){
             workers.wakeUpWorker(doctor);
 
@@ -245,7 +287,6 @@ public class GameServer extends Thread{
         Thread.sleep(NIGHT_SPLIT_TIME);
 
         // wakeup Inspector
-        ServerWorker inspector = workers.getInspector();
         if(inspector != null && !inspector.isDead()){
             workers.wakeUpWorker(inspector);
 
@@ -268,7 +309,6 @@ public class GameServer extends Thread{
         Thread.sleep(NIGHT_SPLIT_TIME);
 
         // wakeup Sniper
-        ServerWorker sniper = workers.getSniper();
         if(sniper != null && !sniper.isDead()){
             workers.wakeUpWorker(sniper);
 
@@ -290,12 +330,11 @@ public class GameServer extends Thread{
         Thread.sleep(NIGHT_SPLIT_TIME);
 
         // wakeup Psycho
-
-        ServerWorker psycho = workers.getPsycho();
         if(psycho != null && !psycho.isDead()){
             workers.wakeUpWorker(psycho);
 
             psychoMute = voter.psychoVote();
+            nightNews.add((psychoMute == null ? "No one" : psychoMute.getUserName()) + " is mute today.");
 
             workers.sleepWorker(psycho);
         }
@@ -310,9 +349,6 @@ public class GameServer extends Thread{
         Thread.sleep(NIGHT_SPLIT_TIME);
 
         // wakeup Strong
-
-        ServerWorker strong = workers.getStrong();
-
         if(strongQuery < 2) {
 
             if (strong != null && !strong.isDead()) {
@@ -443,6 +479,12 @@ public class GameServer extends Thread{
 
     private void waitForLogin() throws InterruptedException {
         while (!workers.allLoggedIn())
+            Thread.sleep(500);
+    }
+
+
+    private void waitForStart() throws InterruptedException {
+        while (!workers.allStarted())
             Thread.sleep(500);
     }
 

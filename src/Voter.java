@@ -3,14 +3,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Voter {
-    private GameServer server;
+    private final GameServer server;
 
     public Voter(GameServer server){
         this.server = server;
     }
 
+    // TODO INSTEAD OF findWorker, USE THE FIELDS
 
-    // TODO CHECK & DEBUG : SKIP OPTION
     public ServerWorker dayVote() throws InterruptedException, IOException {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
@@ -21,6 +21,7 @@ public class Voter {
                 optionsString.add(worker.getUserName());
             }
 
+        // skip option
         options.add(null);
         optionsString.add("Skip");
 
@@ -189,7 +190,6 @@ public class Voter {
     }
 
 
-    // TODO SKIP
     public ServerWorker lectorVote(boolean canHealSelf) throws IOException, InterruptedException {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
@@ -199,7 +199,6 @@ public class Voter {
                 options.add(worker);
                 optionsString.add(worker.getUserName());
             }
-
 
         ServerWorker voter = server.getWorkerHandler().findWorker(Group.Mafia, Type.DrLector);
         if(voter == null || voter.isDead())
@@ -214,6 +213,11 @@ public class Voter {
             System.err.println("NO OPTIONS FOR DR.LECTOR");
             return null;
         }
+
+        // skip option
+        options.add(null);
+        optionsString.add("Skip");
+
 
         String voteBody = "Choose the mafia you want to heal tonight";
 
@@ -239,7 +243,6 @@ public class Voter {
     }
 
 
-    // TODO SKIP
     public ServerWorker doctorVote(boolean canHealSelf) throws IOException, InterruptedException {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
@@ -264,6 +267,11 @@ public class Voter {
             System.err.println("NO OPTIONS FOR DOCTOR");
             return null;
         }
+
+        // skip option
+        options.add(null);
+        optionsString.add("Skip");
+
 
         String voteBody = "Choose the person you want to heal tonight";
 
@@ -333,7 +341,7 @@ public class Voter {
     }
 
 
-    // TODO SKIP
+
     public ServerWorker sniperVote() throws IOException, InterruptedException {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
@@ -347,6 +355,10 @@ public class Voter {
                 options.add(worker);
                 optionsString.add(worker.getUserName());
             }
+
+        // skip option
+        options.add(null);
+        optionsString.add("Skip");
 
         String voteBody = "Choose the person you want to snipe tonight";
 
@@ -375,7 +387,6 @@ public class Voter {
     }
 
 
-    // TODO SKIP
     public ServerWorker psychoVote() throws IOException, InterruptedException {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
@@ -389,6 +400,10 @@ public class Voter {
                 options.add(worker);
                 optionsString.add(worker.getUserName());
             }
+
+        // skip option
+        options.add(null);
+        optionsString.add("Skip");
 
         String voteBody = "Choose the person you want to mute for next day";
 

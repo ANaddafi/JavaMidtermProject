@@ -202,12 +202,42 @@ public class Client {
 
         userName = login;
 
+
         System.out.println("Please wait for other players to join...");
 
         String line;
         do{
-            line = bufferedReader.readLine();
+            line = bufferedReader.readLine(); // wait for OK
+
         } while (line == null);
+
+
+        // wait for 'START'
+        System.out.println("All joined! Type '" + GameServer.START + "' to start game...");
+        do{
+            line = scanner.nextLine();
+
+        } while (line != null && !line.equalsIgnoreCase(GameServer.START));
+
+        sendMsg(line);
+
+        System.out.println("Please wait for others to start...");
+
+
+        do{
+            line = bufferedReader.readLine(); // wait for STARTED
+
+        } while (line == null);
+
+
+        do{
+            line = bufferedReader.readLine(); // wait for ROLE
+
+        } while (line == null);
+
+
+        System.out.println("Game is starting...");
+
 
         String[] tokens = line.split(" ");
         System.out.println("Your Group is : " + tokens[2]);
