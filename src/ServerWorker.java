@@ -142,7 +142,7 @@ public class ServerWorker extends Thread{
                     }
 
                 } else if (GameServer.VOTE.equals(cmd)){
-                    if(!isVoting || hasVoted){
+                    if(!isVoting /*|| hasVoted*/){
                         sendErr("You can't vote at the moment");
                         // TODO TELL WHY
                     }else if(tokens.length != 2 || !isNumber(tokens[1]))
@@ -231,9 +231,10 @@ public class ServerWorker extends Thread{
 
     private void checkVote(String vote) throws IOException {
         int voteIndex = Integer.parseInt(vote);
-        if(voteIndex > 0 && voteIndex <= voteSize && !hasVoted) {
+        if(voteIndex > 0 && voteIndex <= voteSize /*&& !hasVoted*/) {
             hasVoted = true;
             theVote = voteIndex;
+
             sendErr("OK");
         } else
             sendErr("Enter a valid number");

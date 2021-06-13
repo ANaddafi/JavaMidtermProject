@@ -47,8 +47,8 @@ public class Voter {
         }
 
         // waiting to vote...
-        for(int i = 0; i < GameServer.DAY_VOTE_TIME/GameServer.TIME_TICK && !hasAllVoted(voters); i++)
-            Thread.sleep(GameServer.TIME_TICK);
+        for(int i = 0; i < GameServer.DAY_VOTE_TIME/GameServer.TIME_TICK /*&& !hasAllVoted(voters)*/; i++)
+            Thread.sleep(GameServer.TIME_TICK);                         // now everyone can change vote!
 
         //closing votes
         for(ServerWorker worker : voters)
@@ -461,11 +461,11 @@ public class Voter {
     }
 
     private boolean hasAllVoted(ArrayList<ServerWorker> voters) {
-        boolean hasVoted = true;
         for(ServerWorker worker : voters)
-            hasVoted &= worker.hasVoted();
+            if(!worker.hasVoted())
+                return false;
 
-        return hasVoted;
+        return true;
     }
 
     // TODO CAN WE HAVE TWO OR THREE TYPE OF VOTES? (DAY/MAFIA_NIGHT/CITY_NIGHT) GOOD!

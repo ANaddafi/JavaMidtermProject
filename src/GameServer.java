@@ -4,7 +4,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 public class GameServer extends Thread{
-    public static final int PLAYER_COUNT = 2;
+    public static final int PLAYER_COUNT = 3;
     public static final String SERVER_NAME = "GOD";
     public static final String SLEEP = "SLEEP";
     public static final String WAKEUP = "WAKEUP";
@@ -131,7 +131,7 @@ public class GameServer extends Thread{
         workers.getWorkers().get(1).giveRole(Group.Mafia, Type.DrLector);
         //workers.getWorkers().get(2).giveRole(Group.Mafia, Type.OrdMafia);
 
-        //workers.getWorkers().get(2).giveRole(Group.City, Type.Mayor);
+        workers.getWorkers().get(2).giveRole(Group.City, Type.Mayor);
         /*workers.getWorkers().get(4).giveRole(Group.City, Type.Doctor);
         workers.getWorkers().get(5).giveRole(Group.City, Type.Inspector);
         workers.getWorkers().get(6).giveRole(Group.City, Type.Sniper);
