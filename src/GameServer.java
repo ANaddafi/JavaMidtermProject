@@ -4,7 +4,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 public class GameServer extends Thread{
-    public static final int PLAYER_COUNT = 3;
+    public static final int PLAYER_COUNT = 2;
     public static final String SERVER_NAME = "GOD";
     public static final String SLEEP = "SLEEP";
     public static final String WAKEUP = "WAKEUP";
@@ -16,6 +16,7 @@ public class GameServer extends Thread{
     public static final String DEAD = "DEAD";
     public static final String MUTE = "MUTE";
     public static final String START = "START";
+    public static final String HISTORY = "HISTORY";
 
 
     // time in milli second
@@ -45,6 +46,7 @@ public class GameServer extends Thread{
     private ServerWorker strong;
     private ServerWorker ordCity;
 
+    private StringBuilder chatHistory;
 
     public int drLectorSelfHeal;
     public int doctorSelfHeal;
@@ -60,6 +62,7 @@ public class GameServer extends Thread{
     private final Voter voter;
     private final ArrayList<String> nightNews;
     private boolean firstNight;
+    private boolean isDay;
 
     public GameServer(int port){
         this.port = port;
@@ -71,17 +74,17 @@ public class GameServer extends Thread{
         doctorSelfHeal = 0;
         strongQuery = 0;
         strongSurvived = 0;
+
+        chatHistory = new StringBuilder("");
     }
 
 
     public boolean hasUserName(String userName) {
-        boolean hasUserName = false;
-
         for(ServerWorker worker : workers.getWorkers())
-            if(worker.getUserName() != null)
-                hasUserName |= worker.getUserName().equals(userName);
+            if(worker.getUserName() != null && worker.getUserName().equals(userName))
+                    return true;
 
-        return hasUserName;
+        return false;
     }
 
 
@@ -110,6 +113,7 @@ public class GameServer extends Thread{
 
     private boolean initGame() {
         firstNight = true;
+        isDay = false;
         if(giveRoles()){
             initRoles();
             return true;
@@ -127,7 +131,7 @@ public class GameServer extends Thread{
         workers.getWorkers().get(1).giveRole(Group.Mafia, Type.DrLector);
         //workers.getWorkers().get(2).giveRole(Group.Mafia, Type.OrdMafia);
 
-        workers.getWorkers().get(2).giveRole(Group.City, Type.Mayor);
+        //workers.getWorkers().get(2).giveRole(Group.City, Type.Mayor);
         /*workers.getWorkers().get(4).giveRole(Group.City, Type.Doctor);
         workers.getWorkers().get(5).giveRole(Group.City, Type.Inspector);
         workers.getWorkers().get(6).giveRole(Group.City, Type.Sniper);
@@ -188,6 +192,8 @@ public class GameServer extends Thread{
         while(!gameIsFinished() || DEBUG){
             handleDay();
 
+            processChat(serverMsgFromString("--Day is finished here--"));
+
             Thread.sleep(3000);
             if(gameIsFinished() && !DEBUG)
                 break;
@@ -196,6 +202,7 @@ public class GameServer extends Thread{
 
         }
 
+        // TODO TELL PLAYERS ABOUT THE RESULTS!
         System.out.println("WAITING...");
         while (true)
             Thread.sleep(1000);
@@ -205,6 +212,7 @@ public class GameServer extends Thread{
     private void handleNight() throws IOException, InterruptedException {
         // NIGHT
         System.err.println("NIGHT");
+        isDay = false;
 
         // preparations
         workers.prepareNight();
@@ -416,6 +424,7 @@ public class GameServer extends Thread{
     private void handleDay() throws IOException, InterruptedException {
         // DAY
         System.err.println("DAY");
+        isDay = true;
 
         // preparations
         workers.wakeUpAll();
@@ -506,6 +515,22 @@ public class GameServer extends Thread{
 
     public String msgFromString(String sender, String body){
         return GameServer.MSG + " " + sender + " " + body + "\n";
+    }
+
+    public void processChat(String msg) {
+        if(!isDay)
+            return;
+
+        String[] tokens = msg.split(" ", 3);
+        if(tokens.length != 3)
+            return;
+
+        String sender = tokens[1], body = tokens[2];
+        chatHistory.append(sender + ": " + body + "\n");
+    }
+
+    public String getHistory() {
+        return chatHistory.toString();
     }
 }
 

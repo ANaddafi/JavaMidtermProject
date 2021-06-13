@@ -1,7 +1,6 @@
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.concurrent.ArrayBlockingQueue;
 
 public class ServerWorker extends Thread{
     private Socket connectionSocket;
@@ -121,9 +120,13 @@ public class ServerWorker extends Thread{
                 String cmd = tokens[0];
 
                 if (GameServer.MSG.equals(cmd)){
-                    if(isSleep && isStart)
+                    if(isStart && tokens.length == 3 && tokens[2].equalsIgnoreCase(GameServer.HISTORY)){
+                        sendHistory();
+
+                    } else if(isSleep && isStart) {
                         sendErr("You are currently ASLEEP!");
-                    else if(tokens.length == 3 && tokens[2].equalsIgnoreCase(GameServer.READY)){
+
+                    } else if(tokens.length == 3 && tokens[2].equalsIgnoreCase(GameServer.READY)){
                         isReady = true;
                         sendErr("You're ready for voting!");
 
@@ -133,8 +136,10 @@ public class ServerWorker extends Thread{
 
                     } else if(isMute)
                         sendErr("You are currently MUTE!");
-                     else
+                     else {
                         sendMsgToAllAwake(line);
+                        server.processChat(line);
+                    }
 
                 } else if (GameServer.VOTE.equals(cmd)){
                     if(!isVoting || hasVoted){
@@ -150,6 +155,17 @@ public class ServerWorker extends Thread{
                 }
             }
         }
+    }
+
+    private void sendHistory() throws IOException {
+        String chatHistory = server.getHistory();
+        if(chatHistory.length() == 0){
+            chatHistory = "Nothing to show!\n";
+        } else {
+            chatHistory = "# Chats until now:\n" + chatHistory;
+        }
+
+        outputStream.write((GameServer.HISTORY + " " + chatHistory + GameServer.HISTORY + "\n").getBytes());
     }
 
     private boolean isNumber(String str) {
@@ -206,13 +222,6 @@ public class ServerWorker extends Thread{
     }
 
     public int catchVote(){
-        /*if(!recVote){
-            recVote = true;
-            int voteToSend = theVote;
-            theVote = 0;
-
-            return voteToSend;
-        }*/
 
         int voteToSend = theVote;
         theVote = 0;

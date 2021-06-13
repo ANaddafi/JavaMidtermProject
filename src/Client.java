@@ -2,6 +2,8 @@ import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
 
+// TODO HANDLE BEAUTIFUL UI FOR DISCONNECTING / NOT CONNECTING IN THE BEGINNING
+
 public class Client {
     private static Socket connectionSocket;
     private static InputStream inputStream;
@@ -90,6 +92,9 @@ public class Client {
                                 isMute = true;
                                 System.err.println("You are MUTE for today!");
 
+                            } else if (GameServer.HISTORY.equals(cmd)){
+                                handleHistory(line);
+
                             } else {
                                 System.out.println("Unknown command <" + cmd + ">");
                             }
@@ -122,6 +127,29 @@ public class Client {
         };
 
         writerThread.start();
+    }
+
+    private static void handleHistory(String line) throws IOException {
+        System.out.println("\n-------Chat History-------");
+
+        String[] tokens = line.split(" ", 2);
+        if(tokens.length == 2)
+            line = tokens[1];
+
+        do {
+            // check if GOD message
+            if(line != null && line.contains(" ") && line.split(" ")[0].equals(GameServer.SERVER_NAME + ":"))
+                System.out.println(line.split(" ", 2)[1]);
+            else
+                System.out.println(line);
+
+            line = bufferedReader.readLine();
+
+        } while (line == null || !line.equals(GameServer.HISTORY));
+
+        System.out.println("---------Finished---------\n");
+
+
     }
 
     private static void handleVoteResponse(String line) {
