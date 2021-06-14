@@ -22,7 +22,7 @@ public class ServerWorker extends Thread{
     private boolean isDead;
     private boolean isOnline;
     private boolean isSleep;
-    private boolean isMute; // TODO TELL CLIENT THAT HES MUTE NOW!
+    private boolean isMute;
     private boolean isReady;
     private boolean isStart;
 
@@ -330,5 +330,12 @@ public class ServerWorker extends Thread{
     public void makeMute() throws IOException {
         isMute = true;
         sendMsgToClient(GameServer.MUTE);
+    }
+
+    public void tellTime(String time) throws IOException {
+        if(!isOnline)
+            return;
+
+        sendErr("Now it's " + time);
     }
 }

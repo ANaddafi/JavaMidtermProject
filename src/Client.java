@@ -2,8 +2,6 @@ import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
 
-// TODO TELL PLAYER IT'S DAY/NIGHT
-
 public class Client {
     private static Socket connectionSocket;
     private static InputStream inputStream;
@@ -77,11 +75,11 @@ public class Client {
 
                             if (GameServer.SLEEP.equals(cmd)) {
                                 isSleep = true;
-                                System.err.println("\nYou're ASLEEP! You can't chat.");
+                                System.err.println("# You're ASLEEP! You can't chat.");
 
                             } else if (GameServer.WAKEUP.equals(cmd)) {
                                 isSleep = false;
-                                System.err.println("\nYou're AWAKE! You can chat.");
+                                System.err.println("# You're AWAKE! You can chat.");
 
                             } else if (GameServer.MSG.equals(cmd)) {
                                 showMsg(line);
@@ -90,7 +88,7 @@ public class Client {
                                 if(isVoting)
                                     handleVoteResponse(line);
                                 else
-                                    System.err.println(line.split(" ", 2)[1]);
+                                    System.err.println("> " + line.split(" ", 2)[1]);
 
                             } else if (GameServer.VOTE.equals(cmd)){
                                 handleVote(line);
@@ -101,17 +99,17 @@ public class Client {
 
                             } else if (GameServer.DEAD.equals(cmd)){
                                 isDead = true;
-                                System.err.println("You are DEAD!\nYou can still see other players chats,\nOr type 'EXIT' to exit the game.");
+                                System.err.println(">> You are DEAD!\nYou can still see other players chats,\nOr type 'EXIT' to exit the game.");
 
                             } else if (GameServer.MUTE.equals(cmd)){
                                 isMute = true;
-                                System.err.println("You are MUTE for today!");
+                                System.err.println(">> You are MUTE for today!");
 
                             } else if (GameServer.HISTORY.equals(cmd)){
                                 handleHistory(line);
 
                             } else {
-                                System.out.println("Unknown command <" + cmd + ">");
+                                System.out.println("!Unknown command <" + cmd + ">");
                             }
                         }
                     }
@@ -199,10 +197,10 @@ public class Client {
     private static void handleVoteResponse(String line) {
         String body = line.split(" ", 2)[1];
         if("OK".equals(body)) {
-            System.err.println("Your vote is received!");
+            System.err.println("> Your vote is received!");
             hasVoted = true;
         } else
-            System.err.println(body);
+            System.err.println("> " + body);
     }
 
     // format: <VOTE> <body>::<options> <time>
@@ -266,7 +264,7 @@ public class Client {
                 if(login.contains(" "))
                     System.out.println(" Name must be ONE word!");
 
-                System.out.print("Try again: ");
+                System.out.print(" Try again: ");
 
                 login = null;
             }

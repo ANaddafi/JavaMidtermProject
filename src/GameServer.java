@@ -224,6 +224,7 @@ public class GameServer extends Thread{
         // NIGHT
         System.err.println("NIGHT");
         isDay = false;
+        workers.tellTime("night");
 
         // preparations
         workers.prepareNight();
@@ -436,6 +437,7 @@ public class GameServer extends Thread{
         // DAY
         System.err.println("DAY");
         isDay = true;
+        workers.tellTime("day");
 
         // preparations
         workers.wakeUpAll();

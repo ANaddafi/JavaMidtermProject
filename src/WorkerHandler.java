@@ -137,4 +137,10 @@ public class WorkerHandler {
             if(worker.isOnline())
                 worker.sendMsgToClient(toSend);
     }
+
+    public void tellTime(String time) throws IOException {
+        for (ServerWorker worker : workers)
+            if(worker.isOnline())
+                worker.tellTime(time);
+    }
 }
