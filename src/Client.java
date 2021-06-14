@@ -87,6 +87,8 @@ public class Client {
                             } else if (GameServer.ERR.equals(cmd)) {
                                 if(isVoting)
                                     handleVoteResponse(line);
+                                else if(line.split(" ", 2)[1].equals(GameServer.BREAK))
+                                    System.err.println();
                                 else
                                     System.err.println("> " + line.split(" ", 2)[1]);
 
@@ -96,14 +98,15 @@ public class Client {
                             } else if (GameServer.TIMEOUT.equals(cmd)) {
                                 isVoting = false;
                                 hasVoted = false;
+                                System.out.println();
 
                             } else if (GameServer.DEAD.equals(cmd)){
                                 isDead = true;
-                                System.err.println(">> You are DEAD!\nYou can still see other players chats,\nOr type 'EXIT' to exit the game.");
+                                System.err.println("\n>> You are DEAD!\nYou can still see other players chats,\nOr type 'EXIT' to exit the game.");
 
                             } else if (GameServer.MUTE.equals(cmd)){
                                 isMute = true;
-                                System.err.println(">> You are MUTE for today!");
+                                System.err.println("\n>> You are MUTE for today!");
 
                             } else if (GameServer.HISTORY.equals(cmd)){
                                 handleHistory(line);
@@ -128,6 +131,7 @@ public class Client {
             public void run() {
                 try {
                     String line;
+
                     while ((line = scanner.nextLine()) != null) {
                         if(line.equalsIgnoreCase(GameServer.EXIT))
                             handleExit();
@@ -135,6 +139,7 @@ public class Client {
                             sendVote(line);
                         else
                             sendMsg(line);
+
                     }
                 } catch (IOException e) {
                     // e.printStackTrace();
@@ -161,6 +166,7 @@ public class Client {
 
         String line;
         do{
+            System.out.print("> ");
             line = scanner.nextLine();
 
         } while(line == null || !line.equalsIgnoreCase("Y") && !line.equalsIgnoreCase("N"));
@@ -181,7 +187,7 @@ public class Client {
         do {
             // check if GOD message
             if(line != null && line.contains(" ") && line.split(" ")[0].equals(GameServer.SERVER_NAME + ":"))
-                System.out.println(line.split(" ", 2)[1]);
+                System.out.println("\n" + line.split(" ", 2)[1]);
             else
                 System.out.println(line);
 
@@ -199,15 +205,16 @@ public class Client {
         if("OK".equals(body)) {
             System.err.println("> Your vote is received!");
             hasVoted = true;
-        } else
+        } else {
             System.err.println("> " + body);
+        }
     }
 
     // format: <VOTE> <body>::<options> <time>
     private static void handleVote(String line) {
         isVoting = true;
         hasVoted = false;
-        String[] tokens = line.split("::");
+        String[] tokens = line.split("::", 2);
         String[] options = tokens[1].split(" "); // last one is <time>
 
         String body = tokens[0].split(" ", 2)[1];
@@ -221,6 +228,7 @@ public class Client {
         for(int i = 1; i <= cnt; i++)
             System.out.print("" + i + ")" + options[i-1] + "\t");
 
+        System.out.println();
         System.out.println();
     }
 
@@ -250,7 +258,7 @@ public class Client {
     }
 
     private static void handleLogin() throws IOException {
-        System.out.print("Enter your name: ");
+        System.out.print("\nEnter your name: ");
         String login;
         do{
             login = scanner.nextLine();
@@ -274,7 +282,7 @@ public class Client {
         userName = login;
 
 
-        System.out.println("Please wait for other players to join...");
+        System.out.println("-----------\n> Please wait for other players to join...");
 
         String line;
         do{
@@ -284,15 +292,16 @@ public class Client {
 
 
         // wait for 'START'
-        System.out.println("All joined! Type '" + GameServer.START + "' to start game...");
+        System.out.println("-----------\n> All joined! Type '" + GameServer.START + "' to start game...");
         do{
+            System.out.print("> ");
             line = scanner.nextLine();
 
         } while (line != null && !line.equalsIgnoreCase(GameServer.START));
 
         sendMsg(line);
 
-        System.out.println("Please wait for others to start...");
+        System.out.println("-----------\n> Please wait for others to start...\n");
 
 
         do{
@@ -307,12 +316,14 @@ public class Client {
         } while (line == null);
 
 
-        System.out.println("Game is starting...");
+        System.out.println("> Game is starting...\n");
 
 
         String[] tokens = line.split(" ");
-        System.out.println("Your Group is : " + tokens[2]);
-        System.out.println("Your Type  is : " + tokens[3]);
+        System.out.println(">> Your Group is : " + tokens[2]);
+        System.out.println(">> Your Type  is : " + tokens[3]);
+
+        System.out.println("\n---------------------------------\n");
     }
 
     private static boolean isNumber(String str) {

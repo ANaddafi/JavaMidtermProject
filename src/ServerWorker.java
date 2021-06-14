@@ -163,7 +163,7 @@ public class ServerWorker extends Thread{
                 } else if (GameServer.VOTE.equals(cmd)){
                     if(!isVoting /*|| hasVoted*/){
                         sendErr("You can't vote at the moment");
-                        // TODO TELL WHY
+
                     }else if(tokens.length != 2 || !isNumber(tokens[1]))
                         sendErr("Enter a valid number");
                     else
@@ -336,6 +336,8 @@ public class ServerWorker extends Thread{
         if(!isOnline)
             return;
 
+        sendErr(GameServer.BREAK); // sends line break
         sendErr("Now it's " + time);
+        sendErr(GameServer.BREAK);
     }
 }

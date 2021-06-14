@@ -5,7 +5,7 @@ import java.util.HashMap;
 public class Voter {
     private final GameServer server;
 
-    public Voter(GameServer server){
+    public Voter(GameServer server) {
         this.server = server;
     }
 
@@ -15,8 +15,8 @@ public class Voter {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
 
-        for(ServerWorker worker : server.getWorkers())
-            if(!worker.isDead()) {
+        for (ServerWorker worker : server.getWorkers())
+            if (!worker.isDead()) {
                 options.add(worker);
                 optionsString.add(worker.getUserName());
             }
@@ -29,29 +29,29 @@ public class Voter {
         String voteBody = "Choose the one you think is Mafia";
 
         ArrayList<ServerWorker> voters = new ArrayList<>();
-        for(ServerWorker worker : server.getWorkers())
-            if(!worker.isDead())
+        for (ServerWorker worker : server.getWorkers())
+            if (!worker.isDead())
                 voters.add(worker);
 
         // starting votes
-        for(ServerWorker worker : voters) {
+        for (ServerWorker worker : voters) {
             // one can not vote himself
             int indexOfUserName = optionsString.indexOf(worker.getUserName());
-            if(indexOfUserName != -1)
+            if (indexOfUserName != -1)
                 optionsString.remove(indexOfUserName);
 
             worker.getVote(voteBody, GameServer.DAY_VOTE_TIME, optionsString);
 
-            if(indexOfUserName != -1)
+            if (indexOfUserName != -1)
                 optionsString.add(indexOfUserName, worker.getUserName());
         }
 
         // waiting to vote...
-        for(int i = 0; i < GameServer.DAY_VOTE_TIME/GameServer.TIME_TICK /*&& !hasAllVoted(voters)*/; i++)
+        for (int i = 0; i < GameServer.DAY_VOTE_TIME / GameServer.TIME_TICK /*&& !hasAllVoted(voters)*/; i++)
             Thread.sleep(GameServer.TIME_TICK);                         // now everyone can change vote!
 
         //closing votes
-        for(ServerWorker worker : voters)
+        for (ServerWorker worker : voters)
             worker.closeVote();
 
         ServerWorker winner = null;
@@ -59,19 +59,19 @@ public class Voter {
         int skipped = 0;
 
         HashMap<ServerWorker, Integer> resultCount = new HashMap<>();
-        for(ServerWorker worker : options)
-            if(worker != null)
+        for (ServerWorker worker : options)
+            if (worker != null)
                 resultCount.put(worker, 0);
 
-        for(ServerWorker worker : voters){
+        for (ServerWorker worker : voters) {
             // one can not vote himself
             int indexOfUserName = options.indexOf(worker);
-            if(indexOfUserName != -1)
+            if (indexOfUserName != -1)
                 options.remove(indexOfUserName);
 
             int vote = worker.catchVote();
 
-            if(vote != 0 && vote != options.size()){
+            if (vote != 0 && vote != options.size()) {
 
                 ServerWorker voted = options.get(vote - 1);
                 resultCount.replace(voted, resultCount.get(voted) + 1);
@@ -79,35 +79,35 @@ public class Voter {
                 server.getWorkerHandler().msgToAllAwake(
                         server.serverMsgFromString(worker.getUserName() + " voted to " + voted.getUserName())
                         /*,worker*/
-                    );
+                );
 
             } else {
 
-                skipped ++;
+                skipped++;
                 server.getWorkerHandler().msgToAllAwake(
                         server.serverMsgFromString(worker.getUserName() + " skipped voting")
                         /*,worker*/
-                    );
+                );
             }
 
-            if(indexOfUserName != -1)
+            if (indexOfUserName != -1)
                 options.add(indexOfUserName, worker);
         }
 
-        for(ServerWorker worker : options)
-            if(worker != null && mostVotes < resultCount.get(worker)){
+        for (ServerWorker worker : options)
+            if (worker != null && mostVotes < resultCount.get(worker)) {
                 mostVotes = resultCount.get(worker);
                 winner = worker;
             }
 
         int winnerCount = 0;
-        if(mostVotes != 0){
-            for(ServerWorker worker : options)
-                if(worker != null && resultCount.get(worker) == mostVotes)
+        if (mostVotes != 0) {
+            for (ServerWorker worker : options)
+                if (worker != null && resultCount.get(worker) == mostVotes)
                     winnerCount++;
         }
 
-        if(mostVotes <= skipped)
+        if (mostVotes <= skipped)
             winner = null;
 
         return winnerCount != 1 ? null : winner;
@@ -115,11 +115,11 @@ public class Voter {
 
     // true -> remove dayVote
     public boolean mayorVote(String userNameToKill) throws IOException, InterruptedException {
-        if(userNameToKill == null)
+        if (userNameToKill == null)
             return false;
 
         ServerWorker mayor = server.getWorkerHandler().findWorker(Group.City, Type.Mayor);
-        if(mayor == null || mayor.isDead())
+        if (mayor == null || mayor.isDead())
             return true;
 
         // preparing vote
@@ -133,7 +133,7 @@ public class Voter {
         mayor.getVote(voteBody, GameServer.MAYOR_VOTE_TIME, options);
 
         // waiting to vote...
-        for(int i = 0; i < GameServer.MAYOR_VOTE_TIME/GameServer.TIME_TICK && !mayor.hasVoted(); i++)
+        for (int i = 0; i < GameServer.MAYOR_VOTE_TIME / GameServer.TIME_TICK && !mayor.hasVoted(); i++)
             Thread.sleep(GameServer.TIME_TICK);
 
         // closing the vote
@@ -149,8 +149,8 @@ public class Voter {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
 
-        for(ServerWorker worker : server.getWorkerHandler().getCity())
-            if(!worker.isDead()) {
+        for (ServerWorker worker : server.getWorkerHandler().getCity())
+            if (!worker.isDead()) {
                 options.add(worker);
                 optionsString.add(worker.getUserName());
             }
@@ -158,13 +158,13 @@ public class Voter {
         String voteBody = "Choose the citizen you want to shoot tonight";
 
         ServerWorker voter = server.getWorkerHandler().findWorker(Group.Mafia, Type.GodFather);
-        if(voter == null || voter.isDead()) {
+        if (voter == null || voter.isDead()) {
             voter = server.getWorkerHandler().findWorker(Group.Mafia, Type.DrLector);
-            if(voter == null || voter.isDead())
+            if (voter == null || voter.isDead())
                 voter = server.getWorkerHandler().findWorker(Group.Mafia, Type.OrdMafia);
         }
 
-        if(voter == null || voter.isDead())
+        if (voter == null || voter.isDead())
             return null;
 
 
@@ -172,18 +172,18 @@ public class Voter {
         voter.getVote(voteBody, GameServer.MAFIA_KILL_TIME, optionsString);
 
         // waiting to vote...
-        for(int i = 0; i < GameServer.MAFIA_KILL_TIME/GameServer.TIME_TICK && !voter.hasVoted(); i++)
+        for (int i = 0; i < GameServer.MAFIA_KILL_TIME / GameServer.TIME_TICK && !voter.hasVoted(); i++)
             Thread.sleep(GameServer.TIME_TICK);
 
 
         //closing votes
         voter.closeVote();
 
-        try{
+        try {
             int index = voter.catchVote();
             return options.get(index - 1);
 
-        } catch (IndexOutOfBoundsException e){
+        } catch (IndexOutOfBoundsException e) {
             // e.printStackTrace();
             return null;
         }
@@ -194,22 +194,22 @@ public class Voter {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
 
-        for(ServerWorker worker : server.getWorkerHandler().getMafias())
-            if(!worker.isDead()) {
+        for (ServerWorker worker : server.getWorkerHandler().getMafias())
+            if (!worker.isDead()) {
                 options.add(worker);
                 optionsString.add(worker.getUserName());
             }
 
         ServerWorker voter = server.getWorkerHandler().findWorker(Group.Mafia, Type.DrLector);
-        if(voter == null || voter.isDead())
+        if (voter == null || voter.isDead())
             return null;
 
-        if(!canHealSelf) {
+        if (!canHealSelf) {
             options.remove(voter);
             optionsString.remove(voter.getUserName());
         }
 
-        if(options.isEmpty()){
+        if (options.isEmpty()) {
             System.err.println("NO OPTIONS FOR DR.LECTOR");
             return null;
         }
@@ -226,17 +226,17 @@ public class Voter {
         voter.getVote(voteBody, GameServer.MAFIA_HEAL_TIME, optionsString);
 
         // waiting to vote...
-        for(int i = 0; i < GameServer.MAFIA_HEAL_TIME/GameServer.TIME_TICK && !voter.hasVoted(); i++)
+        for (int i = 0; i < GameServer.MAFIA_HEAL_TIME / GameServer.TIME_TICK && !voter.hasVoted(); i++)
             Thread.sleep(GameServer.TIME_TICK);
 
         //closing votes
         voter.closeVote();
 
-        try{
+        try {
             int index = voter.catchVote();
             return options.get(index - 1);
 
-        } catch (IndexOutOfBoundsException e){
+        } catch (IndexOutOfBoundsException e) {
             // e.printStackTrace();
             return null;
         }
@@ -247,23 +247,23 @@ public class Voter {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
 
-        for(ServerWorker worker : server.getWorkerHandler().getWorkers())
-            if(!worker.isDead()) {
+        for (ServerWorker worker : server.getWorkerHandler().getWorkers())
+            if (!worker.isDead()) {
                 options.add(worker);
                 optionsString.add(worker.getUserName());
             }
 
 
         ServerWorker voter = server.getWorkerHandler().findWorker(Group.City, Type.Doctor);
-        if(voter == null || voter.isDead())
+        if (voter == null || voter.isDead())
             return null;
 
-        if(!canHealSelf) {
+        if (!canHealSelf) {
             options.remove(voter);
             optionsString.remove(voter.getUserName());
         }
 
-        if(options.isEmpty()){
+        if (options.isEmpty()) {
             System.err.println("NO OPTIONS FOR DOCTOR");
             return null;
         }
@@ -281,7 +281,7 @@ public class Voter {
 
 
         // waiting to vote...
-        for(int i = 0; i < GameServer.DR_HEAL_TIME/GameServer.TIME_TICK && !voter.hasVoted(); i++)
+        for (int i = 0; i < GameServer.DR_HEAL_TIME / GameServer.TIME_TICK && !voter.hasVoted(); i++)
             Thread.sleep(GameServer.TIME_TICK);
 
 
@@ -289,11 +289,11 @@ public class Voter {
         voter.closeVote();
 
 
-        try{
+        try {
             int index = voter.catchVote();
             return options.get(index - 1);
 
-        } catch (IndexOutOfBoundsException e){
+        } catch (IndexOutOfBoundsException e) {
             // e.printStackTrace();
             return null;
         }
@@ -305,11 +305,11 @@ public class Voter {
         ArrayList<String> optionsString = new ArrayList<>();
 
         ServerWorker voter = server.getWorkerHandler().findWorker(Group.City, Type.Inspector);
-        if(voter == null || voter.isDead())
+        if (voter == null || voter.isDead())
             return null;
 
-        for(ServerWorker worker : server.getWorkerHandler().getWorkers())
-            if(!worker.isDead() && worker != voter) {
+        for (ServerWorker worker : server.getWorkerHandler().getWorkers())
+            if (!worker.isDead() && worker != voter) {
                 options.add(worker);
                 optionsString.add(worker.getUserName());
             }
@@ -322,7 +322,7 @@ public class Voter {
 
 
         // waiting to vote...
-        for(int i = 0; i < GameServer.INSPECT_TIME/GameServer.TIME_TICK && !voter.hasVoted(); i++)
+        for (int i = 0; i < GameServer.INSPECT_TIME / GameServer.TIME_TICK && !voter.hasVoted(); i++)
             Thread.sleep(GameServer.TIME_TICK);
 
 
@@ -330,16 +330,15 @@ public class Voter {
         voter.closeVote();
 
 
-        try{
+        try {
             int index = voter.catchVote();
             return options.get(index - 1);
 
-        } catch (IndexOutOfBoundsException e){
+        } catch (IndexOutOfBoundsException e) {
             // e.printStackTrace();
             return null;
         }
     }
-
 
 
     public ServerWorker sniperVote() throws IOException, InterruptedException {
@@ -347,11 +346,11 @@ public class Voter {
         ArrayList<String> optionsString = new ArrayList<>();
 
         ServerWorker voter = server.getWorkerHandler().findWorker(Group.City, Type.Sniper);
-        if(voter == null || voter.isDead())
+        if (voter == null || voter.isDead())
             return null;
 
-        for(ServerWorker worker : server.getWorkerHandler().getWorkers())
-            if(!worker.isDead() && worker != voter) {
+        for (ServerWorker worker : server.getWorkerHandler().getWorkers())
+            if (!worker.isDead() && worker != voter) {
                 options.add(worker);
                 optionsString.add(worker.getUserName());
             }
@@ -368,7 +367,7 @@ public class Voter {
 
 
         // waiting to vote...
-        for(int i = 0; i < GameServer.SNIPE_TIME/GameServer.TIME_TICK && !voter.hasVoted(); i++)
+        for (int i = 0; i < GameServer.SNIPE_TIME / GameServer.TIME_TICK && !voter.hasVoted(); i++)
             Thread.sleep(GameServer.TIME_TICK);
 
 
@@ -376,11 +375,11 @@ public class Voter {
         voter.closeVote();
 
 
-        try{
+        try {
             int index = voter.catchVote();
             return options.get(index - 1);
 
-        } catch (IndexOutOfBoundsException e){
+        } catch (IndexOutOfBoundsException e) {
             // e.printStackTrace();
             return null;
         }
@@ -392,11 +391,11 @@ public class Voter {
         ArrayList<String> optionsString = new ArrayList<>();
 
         ServerWorker voter = server.getWorkerHandler().findWorker(Group.City, Type.Psycho);
-        if(voter == null || voter.isDead())
+        if (voter == null || voter.isDead())
             return null;
 
-        for(ServerWorker worker : server.getWorkerHandler().getWorkers())
-            if(!worker.isDead() && worker != voter) {
+        for (ServerWorker worker : server.getWorkerHandler().getWorkers())
+            if (!worker.isDead() && worker != voter) {
                 options.add(worker);
                 optionsString.add(worker.getUserName());
             }
@@ -413,7 +412,7 @@ public class Voter {
 
 
         // waiting to vote...
-        for(int i = 0; i < GameServer.PSYCHO_TIME/GameServer.TIME_TICK && !voter.hasVoted(); i++)
+        for (int i = 0; i < GameServer.PSYCHO_TIME / GameServer.TIME_TICK && !voter.hasVoted(); i++)
             Thread.sleep(GameServer.TIME_TICK);
 
 
@@ -421,11 +420,11 @@ public class Voter {
         voter.closeVote();
 
 
-        try{
+        try {
             int index = voter.catchVote();
             return options.get(index - 1);
 
-        } catch (IndexOutOfBoundsException e){
+        } catch (IndexOutOfBoundsException e) {
             // e.printStackTrace();
             return null;
         }
@@ -434,7 +433,7 @@ public class Voter {
     public boolean strongVote() throws IOException, InterruptedException {
 
         ServerWorker voter = server.getWorkerHandler().findWorker(Group.City, Type.Strong);
-        if(voter == null || voter.isDead())
+        if (voter == null || voter.isDead())
             return true;
 
         // preparing vote
@@ -448,7 +447,7 @@ public class Voter {
         voter.getVote(voteBody, GameServer.STRONG_TIME, options);
 
         // waiting to vote...
-        for(int i = 0; i < GameServer.STRONG_TIME/GameServer.TIME_TICK && !voter.hasVoted(); i++)
+        for (int i = 0; i < GameServer.STRONG_TIME / GameServer.TIME_TICK && !voter.hasVoted(); i++)
             Thread.sleep(GameServer.TIME_TICK);
 
         // closing the vote
@@ -461,14 +460,12 @@ public class Voter {
     }
 
     private boolean hasAllVoted(ArrayList<ServerWorker> voters) {
-        for(ServerWorker worker : voters)
-            if(!worker.hasVoted())
+        for (ServerWorker worker : voters)
+            if (!worker.hasVoted())
                 return false;
 
         return true;
     }
+}
 
     // TODO CAN WE HAVE TWO OR THREE TYPE OF VOTES? (DAY/MAFIA_NIGHT/CITY_NIGHT) GOOD!
-    //  FOR EXAMPLE, ONE FOR DAY VOTE AND
-    //  ANOTHER FOR NIGHT, WHICH GETS A BOOLEAN: WHETHER ONE CAN CHOOSE HIMSELF
-}

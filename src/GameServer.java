@@ -3,12 +3,11 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
-// TODO AT NIGHT IN MAFIA TALK, TELL THEM THE MAFIAS ID
 // TODO IN START OF DAY, TELL WHO IS STILL ALIVE (MAYBE?)
 // TODO USE FOLDERS!
 
 public class GameServer extends Thread{
-    public static final int PLAYER_COUNT = 2;
+    public static final int PLAYER_COUNT = 3;
     public static final String SERVER_NAME = "*GOD*";
     public static final String SLEEP = "SLEEP";
     public static final String WAKEUP = "WAKEUP";
@@ -22,6 +21,7 @@ public class GameServer extends Thread{
     public static final String START = "START";
     public static final String HISTORY = "HISTORY";
     public static final String EXIT = "EXIT";
+    public static final String BREAK = "LINEBREAK";
 
 
     // time in milli second
@@ -143,10 +143,10 @@ public class GameServer extends Thread{
         //workers.getWorkers().get(2).giveRole(Group.Mafia, Type.OrdMafia);
 
         //workers.getWorkers().get(2).giveRole(Group.City, Type.Mayor);
+        workers.getWorkers().get(2).giveRole(Group.City, Type.Psycho);
         /*workers.getWorkers().get(4).giveRole(Group.City, Type.Doctor);
         workers.getWorkers().get(5).giveRole(Group.City, Type.Inspector);
         workers.getWorkers().get(6).giveRole(Group.City, Type.Sniper);
-        workers.getWorkers().get(7).giveRole(Group.City, Type.Psycho);
         workers.getWorkers().get(8).giveRole(Group.City, Type.Strong);
         workers.getWorkers().get(9).giveRole(Group.City, Type.OrdCity);*/
 
@@ -193,7 +193,7 @@ public class GameServer extends Thread{
             for(ServerWorker otherMafia : workers.getMafias())
                 if(mafia != otherMafia)
                     otherMafia.sendMsgToClient(
-                            serverMsgFromString("-> " + mafia.getUserName() + " is " + mafia.getType())
+                            serverMsgFromString(mafia.getUserName() + " is " + mafia.getType())
                     );
 
 
@@ -239,6 +239,14 @@ public class GameServer extends Thread{
 
         // wakeup Mafias
         workers.wakeUpList(workers.getMafias());
+
+        // tell mafias about each other
+        for(ServerWorker mafia : workers.getMafias()) if(mafia.isOnline() && !mafia.isDead())
+            for(ServerWorker otherMafia : workers.getMafias()) if(otherMafia.isOnline() && !otherMafia.isDead())
+                if(mafia != otherMafia)
+                    otherMafia.sendMsgToClient(
+                            serverMsgFromString(mafia.getUserName() + " is " + mafia.getType())
+                    );
 
         for(int i = 0; i < MAFIA_TALK_TIME/TIME_TICK && !workers.allReady(); i++)
             Thread.sleep(TIME_TICK);
@@ -399,14 +407,14 @@ public class GameServer extends Thread{
                 strongSurvived ++;
             } else {
                 mafiaShoot.kill();
-                nightNews.add(mafiaShoot.getUserName() + " was killed last night.");
+                nightNews.add(mafiaShoot.getUserName() + " was killed.");
             }
 
         }
 
         if(sniperShoot != null && sniperShoot != doctorHeal && sniperShoot != mafiaHeal){
             sniperShoot.kill();
-            nightNews.add(sniperShoot.getUserName() + " was killed last night.");
+            nightNews.add(sniperShoot.getUserName() + " was killed.");
         }
 
         if(strongGetQuery)
@@ -470,7 +478,6 @@ public class GameServer extends Thread{
 
         if(doTheKill){
             workers.msgToAllAwake(serverMsgFromString("Today " + dayVoteWinner.getUserName() + " is going to die!"));
-            // workers.msgToAllAwake(serverMsgFromString("He/She was " + dayVoteWinner.getRoleString()));
 
             // DO THE KILL!
             dayVoteWinner.kill();
@@ -489,12 +496,16 @@ public class GameServer extends Thread{
         else
             nightNews.add(0, "Here is what happened last night:");
 
+        nightNews.add(0, "-------------------");
+        nightNews.add(   "-------------------");
+
         for(String news : nightNews)
             workers.msgToAllAwake(serverMsgFromString(news));
     }
 
 
     private boolean gameIsFinished() {
+        // TODO CHECK ONLINE WORKERS
         return workers.mafiaCount() == 0 || workers.mafiaCount() >= workers.cityCount();
     }
 
