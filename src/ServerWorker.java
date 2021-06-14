@@ -20,6 +20,7 @@ public class ServerWorker extends Thread{
     private Type type;
 
     private boolean isDead;
+    private boolean isOnline;
     private boolean isSleep;
     private boolean isMute; // TODO TELL CLIENT THAT HES MUTE NOW!
     private boolean isReady;
@@ -28,6 +29,8 @@ public class ServerWorker extends Thread{
     public ServerWorker(Socket connectionSocket, GameServer server){
         this.connectionSocket = connectionSocket;
         this.server = server;
+
+        isOnline = true;
         isDead = false;
         isSleep = true;
         isMute = false;
@@ -46,6 +49,10 @@ public class ServerWorker extends Thread{
 
     public boolean isDead() {
         return isDead;
+    }
+
+    public boolean isOnline() {
+        return isOnline;
     }
 
     public boolean isReady() {
@@ -103,15 +110,27 @@ public class ServerWorker extends Thread{
 
         } catch (IOException e) {
             // e.printStackTrace();
-            System.err.println(userName + " LEFT");
-            isDead = true;
+            offline();
         }
+    }
+
+    private void offline() {
+        System.err.println(userName + " LEFT");
+        isDead = true;
+        isOnline = false;
+
+        server.tellOffline(userName);
     }
 
     private void handleClientInput() throws IOException {
         String line;
         while( (line = bufferedReader.readLine()) != null){
             String[] tokens = line.split(" ");
+
+            if(line.equalsIgnoreCase(GameServer.EXIT)){
+                offline();
+                return;
+            }
 
             if(isDead){
                 sendErr("You are DEAD!");
@@ -165,7 +184,8 @@ public class ServerWorker extends Thread{
             chatHistory = "# Chats until now:\n" + chatHistory;
         }
 
-        outputStream.write((GameServer.HISTORY + " " + chatHistory + GameServer.HISTORY + "\n").getBytes());
+        if(isOnline)
+            outputStream.write((GameServer.HISTORY + " " + chatHistory + GameServer.HISTORY + "\n").getBytes());
     }
 
     private boolean isNumber(String str) {
@@ -177,11 +197,17 @@ public class ServerWorker extends Thread{
     }
 
     private void sendErr(String error) throws IOException {
+        if(!isOnline)
+            return;
+
         String toSend = GameServer.ERR + " " + error + "\n";
         outputStream.write(toSend.getBytes());
     }
 
     public void sendRole() throws IOException {
+        if(!isOnline)
+            return;
+
         String body = this.group.name() + " " + this.type;
         String toSend = GameServer.MSG + " " + GameServer.SERVER_NAME + " " + body + "\n";
         outputStream.write(toSend.getBytes());
@@ -192,7 +218,7 @@ public class ServerWorker extends Thread{
     }
 
     public void wakeUp() throws IOException {
-        if(isDead)
+        if(isDead || !isOnline)
             return;
 
         isSleep = false;
@@ -202,6 +228,9 @@ public class ServerWorker extends Thread{
     }
 
     public void goSleep() throws IOException {
+        if(!isOnline)
+            return;
+
         isSleep = true;
         outputStream.write((GameServer.SLEEP + "\n").getBytes());
 
@@ -209,13 +238,16 @@ public class ServerWorker extends Thread{
     }
 
     public void sendMsgToClient(String toSend) throws IOException {
+        if(!isOnline)
+            return;
+
         if(!toSend.endsWith("\n"))
             toSend += "\n";
         outputStream.write(toSend.getBytes());
     }
 
     public void sendMsgToAllAwake(String toSend) throws IOException {
-        if(!isDead)
+        if(!isDead && isOnline)
             server.getWorkerHandler().msgToAllAwake(toSend, this);
         else
             sendErr("You can't chat because you are DEAD");
@@ -241,6 +273,8 @@ public class ServerWorker extends Thread{
     }
 
     public void getVote(String voteBody, int voteTime, ArrayList<String> options) throws IOException {
+        if(!isOnline)
+            return;
 
         String optionBody = "";
         int cnt = 1;
@@ -258,6 +292,9 @@ public class ServerWorker extends Thread{
     }
 
     public void closeVote() throws IOException {
+        if(!isOnline)
+            return;
+
         isVoting = false;
         hasVoted = false;
         voteSize = 0;
@@ -278,6 +315,9 @@ public class ServerWorker extends Thread{
     }
 
     public void kill() throws IOException {
+        if(!isOnline)
+            return;
+
         isDead = true;
         isSleep = false;
         outputStream.write((GameServer.DEAD + "\n").getBytes());

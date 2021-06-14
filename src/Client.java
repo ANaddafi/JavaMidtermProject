@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
 
-// TODO HANDLE BEAUTIFUL UI FOR DISCONNECTING / NOT CONNECTING IN THE BEGINNING
+// TODO TELL PLAYER IT'S DAY/NIGHT
 
 public class Client {
     private static Socket connectionSocket;
@@ -19,15 +19,29 @@ public class Client {
     private static boolean isVoting;
     private static boolean hasVoted;
 
-    private static Scanner scanner = new Scanner(System.in);
+    private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
         isSleep = true;
         isDead = false;
         isMute = false;
 
+        // asking for port
+        int port = 8181;
+
+        // TODO UNCOMMENT
+        /*
+        String line = null;
+        while(line == null || !isNumber(line)) {
+            System.out.print("Enter your game port: ");
+            line = scanner.nextLine();
+        }
+
+        port = Integer.parseInt(line);
+        */
+
         try {
-            connectionSocket = new Socket("127.0.0.1", 8181);
+            connectionSocket = new Socket("127.0.0.1", port);
             System.out.println("Connected to server.");
 
             inputStream = connectionSocket.getInputStream();
@@ -37,10 +51,11 @@ public class Client {
             System.out.println("Welcome to the game of MAFIA!");
 
             handleLogin();
-            handleGame();
+            handleGame(); // after starting IO threads, the function returns, and try block finishes.
 
         } catch (IOException e) {
-            e.printStackTrace();
+            // e.printStackTrace();
+            System.err.println("Something went wrong while connecting to the server.");
         }
     }
 
@@ -86,7 +101,7 @@ public class Client {
 
                             } else if (GameServer.DEAD.equals(cmd)){
                                 isDead = true;
-                                System.err.println("You are DEAD! You can still see other players chats.");
+                                System.err.println("You are DEAD!\nYou can still see other players chats,\nOr type 'EXIT' to exit the game.");
 
                             } else if (GameServer.MUTE.equals(cmd)){
                                 isMute = true;
@@ -101,7 +116,8 @@ public class Client {
                         }
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    // e.printStackTrace();
+                    exitGame("Couldn't read message from server.");
                 }
             }
         };
@@ -115,18 +131,46 @@ public class Client {
                 try {
                     String line;
                     while ((line = scanner.nextLine()) != null) {
-                        if(isVoting)
+                        if(line.equalsIgnoreCase(GameServer.EXIT))
+                            handleExit();
+                        else if(isVoting)
                             sendVote(line);
                         else
                             sendMsg(line);
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    // e.printStackTrace();
+                    exitGame("Couldn't send your message.");
                 }
             }
         };
 
         writerThread.start();
+    }
+
+    private static void exitGame() {
+        System.err.println("\n>>> HAVE A GOOD DAY! <<<");
+        System.exit(0);
+    }
+
+    private static void exitGame(String error) {
+        System.err.println("\n!" + error);
+        System.exit(0);
+    }
+
+    private static void handleExit() throws IOException {
+        System.out.println("Are you sure you want to exit the game? (Y/N)");
+
+        String line;
+        do{
+            line = scanner.nextLine();
+
+        } while(line == null || !line.equalsIgnoreCase("Y") && !line.equalsIgnoreCase("N"));
+
+        if(line.equalsIgnoreCase("Y")){
+            outputStream.write(GameServer.EXIT.getBytes());
+            exitGame();
+        }
     }
 
     private static void handleHistory(String line) throws IOException {
@@ -197,8 +241,9 @@ public class Client {
         String sender = tokens[1];
         String body = tokens[2];
 
-        if(body != null && body.length() > 0)
+        if(body != null && body.length() > 0) {
             System.out.println(sender + ": " + body);
+        }
     }
 
     private static void sendMsg(String body) throws IOException {
@@ -270,5 +315,16 @@ public class Client {
         String[] tokens = line.split(" ");
         System.out.println("Your Group is : " + tokens[2]);
         System.out.println("Your Type  is : " + tokens[3]);
+    }
+
+    private static boolean isNumber(String str) {
+        if(str == null || str.isEmpty())
+            return false;
+
+        for(char c : str.toCharArray())
+            if('0' > c || c > '9')
+                return false;
+
+        return true;
     }
 }

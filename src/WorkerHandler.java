@@ -120,20 +120,21 @@ public class WorkerHandler {
 
     public void msgToAllAwake(String toSend) throws IOException {
         for(ServerWorker worker : workers)
-            if(!worker.isSleep()){
+            if(!worker.isSleep() && worker.isOnline()){
                 worker.sendMsgToClient(toSend);
             }
     }
 
     public void msgToAllAwake(String toSend, ServerWorker except) throws IOException {
         for(ServerWorker worker : workers)
-            if(worker != except && !worker.isSleep()){
+            if(worker != except && !worker.isSleep() && worker.isOnline()){
                 worker.sendMsgToClient(toSend);
             }
     }
 
     public void msgToAll(String toSend) throws IOException {
         for(ServerWorker worker : workers)
-            worker.sendMsgToClient(toSend);
+            if(worker.isOnline())
+                worker.sendMsgToClient(toSend);
     }
 }

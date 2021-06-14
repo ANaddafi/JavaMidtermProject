@@ -3,9 +3,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
+// TODO AT NIGHT IN MAFIA TALK, TELL THEM THE MAFIAS ID
+// TODO IN START OF DAY, TELL WHO IS STILL ALIVE (MAYBE?)
+// TODO USE FOLDERS!
+
 public class GameServer extends Thread{
-    public static final int PLAYER_COUNT = 3;
-    public static final String SERVER_NAME = "GOD";
+    public static final int PLAYER_COUNT = 2;
+    public static final String SERVER_NAME = "*GOD*";
     public static final String SLEEP = "SLEEP";
     public static final String WAKEUP = "WAKEUP";
     public static final String VOTE = "VOTE";
@@ -17,6 +21,7 @@ public class GameServer extends Thread{
     public static final String MUTE = "MUTE";
     public static final String START = "START";
     public static final String HISTORY = "HISTORY";
+    public static final String EXIT = "EXIT";
 
 
     // time in milli second
@@ -80,6 +85,12 @@ public class GameServer extends Thread{
 
 
     public boolean hasUserName(String userName) {
+        if(userName == null)
+            return true;
+
+        if(SERVER_NAME.equalsIgnoreCase(userName))
+            return true;
+
         for(ServerWorker worker : workers.getWorkers())
             if(worker.getUserName() != null && worker.getUserName().equals(userName))
                     return true;
@@ -91,7 +102,7 @@ public class GameServer extends Thread{
     @Override
     public void run() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Server Started.\nWating for clients to join...");
+            System.out.println("Server Started.\nWaiting for clients to join...");
 
             for(int i = 0; i < PLAYER_COUNT; i++){
                 Socket clientSocket = serverSocket.accept();
@@ -131,7 +142,7 @@ public class GameServer extends Thread{
         workers.getWorkers().get(1).giveRole(Group.Mafia, Type.DrLector);
         //workers.getWorkers().get(2).giveRole(Group.Mafia, Type.OrdMafia);
 
-        workers.getWorkers().get(2).giveRole(Group.City, Type.Mayor);
+        //workers.getWorkers().get(2).giveRole(Group.City, Type.Mayor);
         /*workers.getWorkers().get(4).giveRole(Group.City, Type.Doctor);
         workers.getWorkers().get(5).giveRole(Group.City, Type.Inspector);
         workers.getWorkers().get(6).giveRole(Group.City, Type.Sniper);
@@ -531,6 +542,15 @@ public class GameServer extends Thread{
 
     public String getHistory() {
         return chatHistory.toString();
+    }
+
+    public void tellOffline(String userName) {
+        try {
+            workers.msgToAll(serverMsgFromString(userName + " left the game."));
+        } catch (IOException e) {
+            // e.printStackTrace();
+            System.err.println("Couldn't tell others that " + userName + " is offline.");
+        }
     }
 }
 

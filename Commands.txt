@@ -1,9 +1,9 @@
 SLEEP
     * Stops receiving messages
-        So the thread which is reading should wait (t.wait())
+        So none of his messages is sent to others or processed
 WAKEUP
     * Starts receiving messages
-        So the thread which is reading should start (t.notify())
+        So his messages are now processed
 VOTE
     Server -> Client : VOTE <vote msg>::<vote list> <vote time>
     Client -> Server : VOTE <int index>
@@ -19,6 +19,7 @@ ERR
     ERR
     * your username has been chosen before / is invalid
     * you are currently asleep
+    * Other server messages that are not from the 'GOD'
 
 DEAD
     DEAD
@@ -34,5 +35,21 @@ TIMEOUT
 
 READY
     READY
-    client -> server
+    client -> server    (through MSG)
     * when client is ready to vote
+
+HISTORY
+    HISTORY
+    client -> server    (through MSG)
+    * show chat history
+
+START
+    START
+    client -> server    (through MSG)
+    * ready to start game
+
+
+EXIT
+    EXIT
+    client -> server
+    * exit the game
