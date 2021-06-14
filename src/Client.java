@@ -57,7 +57,7 @@ public class Client {
         }
     }
 
-    private static void handleGame() throws IOException {
+    private static void handleGame() {
 
         // READER THREAD
         Thread readerThread = new Thread() {
@@ -228,7 +228,6 @@ public class Client {
         for(int i = 1; i <= cnt; i++)
             System.out.print("" + i + ")" + options[i-1] + "\t");
 
-        System.out.println();
         System.out.println();
     }
 

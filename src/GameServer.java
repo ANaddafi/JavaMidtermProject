@@ -3,8 +3,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
-// TODO IN START OF DAY, TELL WHO IS STILL ALIVE (MAYBE?)
-// TODO USE FOLDERS!
+// TODO USE FOLDERS(PACKAGE)!
 
 public class GameServer extends Thread{
     public static final int PLAYER_COUNT = 3;
@@ -51,7 +50,7 @@ public class GameServer extends Thread{
     private ServerWorker strong;
     private ServerWorker ordCity;
 
-    private StringBuilder chatHistory;
+    private final StringBuilder chatHistory;
 
     public int drLectorSelfHeal;
     public int doctorSelfHeal;
@@ -67,6 +66,7 @@ public class GameServer extends Thread{
     private final Voter voter;
     private final ArrayList<String> nightNews;
     private boolean firstNight;
+    private boolean firstDay;
     private boolean isDay;
 
     public GameServer(int port){
@@ -80,7 +80,7 @@ public class GameServer extends Thread{
         strongQuery = 0;
         strongSurvived = 0;
 
-        chatHistory = new StringBuilder("");
+        chatHistory = new StringBuilder();
     }
 
 
@@ -124,6 +124,7 @@ public class GameServer extends Thread{
 
     private boolean initGame() {
         firstNight = true;
+        firstDay = true;
         isDay = false;
         if(giveRoles()){
             initRoles();
@@ -214,9 +215,9 @@ public class GameServer extends Thread{
         }
 
         // TODO TELL PLAYERS ABOUT THE RESULTS!
-        System.out.println("WAITING...");
-        while (true)
-            Thread.sleep(1000);
+        System.err.println("\nGAME IS FINISHED!\n");
+        workers.msgToAll(serverMsgFromString("GAME IS FINISHED!"));
+        // TODO EXIT FOR THEM!
 
     }
 
@@ -225,12 +226,13 @@ public class GameServer extends Thread{
         System.err.println("NIGHT");
         isDay = false;
         workers.tellTime("night");
+        Thread.sleep(500);
 
         // preparations
         workers.prepareNight();
         nightNews.clear();
         firstNight = false;
-        ServerWorker mafiaShoot = null;
+        ServerWorker mafiaShoot;
         ServerWorker mafiaHeal = null;
         ServerWorker doctorHeal = null;
         ServerWorker sniperShoot = null;
@@ -446,11 +448,19 @@ public class GameServer extends Thread{
         System.err.println("DAY");
         isDay = true;
         workers.tellTime("day");
+        Thread.sleep(500);
 
         // preparations
         workers.wakeUpAll();
+        Thread.sleep(500);
+
         if(!firstNight)
             sendNightNews();
+
+        if(!firstDay)
+            workers.tellWhoIsAlive();
+
+        firstDay = false;
 
         // discussion
         for(int i = 0; i < DAY_TIME/TIME_TICK; i++){
@@ -532,12 +542,12 @@ public class GameServer extends Thread{
     }
 
 
-    public String serverMsgFromString(String body){
+    public static String serverMsgFromString(String body){
         return msgFromString(SERVER_NAME, body);
     }
 
 
-    public String msgFromString(String sender, String body){
+    public static String msgFromString(String sender, String body){
         return GameServer.MSG + " " + sender + " " + body + "\n";
     }
 

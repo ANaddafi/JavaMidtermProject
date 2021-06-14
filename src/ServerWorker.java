@@ -2,12 +2,12 @@ import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 
-public class ServerWorker extends Thread{
-    private Socket connectionSocket;
+class ServerWorker extends Thread{
+    private final Socket connectionSocket;
     private OutputStream outputStream;
     private InputStream inputStream;
     private BufferedReader bufferedReader;
-    private GameServer server;
+    private final GameServer server;
 
     private int theVote;
     private int voteSize;

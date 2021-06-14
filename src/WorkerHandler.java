@@ -1,7 +1,7 @@
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class WorkerHandler {
+class WorkerHandler {
     private final ArrayList<ServerWorker> workers;
 
     public WorkerHandler(){
@@ -142,5 +142,20 @@ public class WorkerHandler {
         for (ServerWorker worker : workers)
             if(worker.isOnline())
                 worker.tellTime(time);
+    }
+
+    public void tellWhoIsAlive() throws IOException {
+        String alive = "";
+        for(ServerWorker worker : workers)
+            if(worker.isOnline() && !worker.isDead())
+                alive += worker.getUserName() + ", ";
+
+        msgToAllAwake(GameServer.serverMsgFromString("Alive players:"));
+        msgToAllAwake(GameServer.serverMsgFromString(
+                alive.substring(0, alive.lastIndexOf(",")))
+        );
+        msgToAllAwake(GameServer.serverMsgFromString("-------------------"));
+
+        // TODO LINEBREAK HERE
     }
 }
