@@ -2,6 +2,10 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.IntStream;
 
 // TODO USE FOLDERS(PACKAGE)!
 
@@ -139,17 +143,22 @@ public class GameServer extends Thread{
         if(workers.count() != PLAYER_COUNT)
             return false;
 
-        workers.getWorkers().get(0).giveRole(Group.Mafia, Type.GodFather);
-        workers.getWorkers().get(1).giveRole(Group.Mafia, Type.DrLector);
-        //workers.getWorkers().get(2).giveRole(Group.Mafia, Type.OrdMafia);
+        ArrayList<Integer> index = new ArrayList<>();
+        for(int i = 0; i < PLAYER_COUNT; i++)
+            index.add(i);
+        Collections.shuffle(index);
 
-        //workers.getWorkers().get(2).giveRole(Group.City, Type.Mayor);
-        workers.getWorkers().get(2).giveRole(Group.City, Type.Psycho);
-        /*workers.getWorkers().get(4).giveRole(Group.City, Type.Doctor);
-        workers.getWorkers().get(5).giveRole(Group.City, Type.Inspector);
-        workers.getWorkers().get(6).giveRole(Group.City, Type.Sniper);
-        workers.getWorkers().get(8).giveRole(Group.City, Type.Strong);
-        workers.getWorkers().get(9).giveRole(Group.City, Type.OrdCity);*/
+        workers.getWorkers().get(index.get(0)).giveRole(Group.Mafia, Type.GodFather);
+        workers.getWorkers().get(index.get(1)).giveRole(Group.Mafia, Type.DrLector);
+        workers.getWorkers().get(index.get(2)).giveRole(Group.Mafia, Type.OrdMafia);
+
+//         workers.getWorkers().get(index.get(3)).giveRole(Group.City, Type.Mayor);
+//         workers.getWorkers().get(index.get(4)).giveRole(Group.City, Type.Psycho);
+//         workers.getWorkers().get(index.get(5)).giveRole(Group.City, Type.Doctor);
+//         workers.getWorkers().get(index.get(6)).giveRole(Group.City, Type.Inspector);
+//         workers.getWorkers().get(index.get(7)).giveRole(Group.City, Type.Sniper);
+//         workers.getWorkers().get(index.get(8)).giveRole(Group.City, Type.Strong);
+//         workers.getWorkers().get(index.get(9)).giveRole(Group.City, Type.OrdCity);
 
         return true;
     }
