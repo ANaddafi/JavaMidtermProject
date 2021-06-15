@@ -195,10 +195,10 @@ public class GameServer extends Thread{
 
         // giving city roles
          workers.getWorkers().get(index.get(3)).giveRole(Group.City, Type.Mayor);
-         workers.getWorkers().get(index.get(4)).giveRole(Group.City, Type.Psycho);
-         workers.getWorkers().get(index.get(5)).giveRole(Group.City, Type.Doctor);
-         workers.getWorkers().get(index.get(6)).giveRole(Group.City, Type.Inspector);
-         workers.getWorkers().get(index.get(7)).giveRole(Group.City, Type.Sniper);
+         workers.getWorkers().get(index.get(4)).giveRole(Group.City, Type.Doctor);
+         workers.getWorkers().get(index.get(5)).giveRole(Group.City, Type.Inspector);
+         workers.getWorkers().get(index.get(6)).giveRole(Group.City, Type.Sniper);
+         workers.getWorkers().get(index.get(7)).giveRole(Group.City, Type.Psycho);
          workers.getWorkers().get(index.get(8)).giveRole(Group.City, Type.Strong);
          workers.getWorkers().get(index.get(9)).giveRole(Group.City, Type.OrdCity);
 
@@ -231,7 +231,7 @@ public class GameServer extends Thread{
      * @throws InterruptedException If there is any unhandled exceptions while sleeping
      */
     private void startGame() throws IOException, InterruptedException {
-        // preperations
+        // preparations
         waitForLogin();
         System.err.println("ALL LOGGED IN");
 
@@ -248,7 +248,7 @@ public class GameServer extends Thread{
         // tell mayor about doctor
         if(mayor != null && doctor != null)
             mayor.sendMsgToClient(
-                    serverMsgFromString("-> City Doctor is " + doctor.getUserName())
+                    serverMsgFromString("City Doctor is " + doctor.getUserName())
             );
 
         // tell mafias about each other
@@ -268,16 +268,19 @@ public class GameServer extends Thread{
 
             processChat(serverMsgFromString("--Day is finished here--"));
 
-            Thread.sleep(3000);
             if(gameIsFinished())
                 break;
 
+            Thread.sleep(2000);
+
             handleNight();
+            Thread.sleep(2000);
 
         }
 
         // game is finished
         System.err.println("\nGAME IS FINISHED!\n");
+        Thread.sleep(1500);
 
         if(workers.mafiaCount() == 0){ // CITY WINS!
             System.err.println("CITY WINS!");
@@ -342,9 +345,13 @@ public class GameServer extends Thread{
         // discussion
         for(int i = 0; i < DAY_TIME/TIME_TICK; i++){
             Thread.sleep(TIME_TICK);
-            if(workers.allReady())
+            if(workers.allReady() || gameIsFinished())
                 break;
         }
+
+        // some players may leave the game in discussion time
+        if(gameIsFinished())
+            return;
 
         // voting
         System.out.println("DAY VOTE");

@@ -9,7 +9,7 @@ import java.util.HashMap;
 
 /**
  * Voter class.
- * Contains methods for votings.
+ * Contains methods for voting.
  */
 public class Voter {
     private final GameServer server;
