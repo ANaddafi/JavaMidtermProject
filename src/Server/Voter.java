@@ -7,14 +7,34 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * Voter class.
+ * Contains methods for votings.
+ */
 public class Voter {
     private final GameServer server;
 
+    /**
+     * Voter constructor.
+     *
+     * @param server the server
+     */
     public Voter(GameServer server) {
         this.server = server;
     }
 
+
+    /**
+     * Day vote.
+     * All ALIVE player can vote
+     * winner may be null if there are more than one winner!
+     *
+     * @return vote winner, or null if there are more than one winner
+     * @throws InterruptedException If there is any unhandled exceptions while sleeping
+     * @throws IOException          If there is any unhandled exceptions while sending/reading messages
+     */
     public ServerWorker dayVote() throws InterruptedException, IOException {
+        // options
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
 
@@ -31,6 +51,7 @@ public class Voter {
 
         String voteBody = "Choose the one you think is Mafia";
 
+        // voters
         ArrayList<ServerWorker> voters = new ArrayList<>();
         for (ServerWorker worker : server.getWorkers())
             if (!worker.isDead())
@@ -57,6 +78,7 @@ public class Voter {
         for (ServerWorker worker : voters)
             worker.closeVote();
 
+        // processing results
         ServerWorker winner = null;
         int mostVotes = 0;
         int skipped = 0;
@@ -116,7 +138,17 @@ public class Voter {
         return winnerCount != 1 ? null : winner;
     }
 
-    // true -> remove dayVote
+
+    /**
+     * Mayor vote.
+     * Result is 'YES' or 'NO'
+     * Always do the kill, except for when mayor says 'NO'
+     *
+     * @param userNameToKill the player to kill
+     * @return true, if mayor says to kill, or says nothing
+     * @throws IOException          If there is any unhandled exceptions while sending/reading messages
+     * @throws InterruptedException If there is any unhandled exceptions while sleeping
+     */
     public boolean mayorVote(String userNameToKill) throws IOException, InterruptedException {
         if (userNameToKill == null)
             return false;
@@ -148,7 +180,19 @@ public class Voter {
     }
 
 
+    /**
+     * Mafia vote.
+     * Only godfather can vote.
+     * If he's dead, drLector,
+     * If drLector is dead, ordMafia.
+     * Only citizens can be shot
+     *
+     * @return the citizen to shoot
+     * @throws IOException          If there is any unhandled exceptions while sending/reading messages
+     * @throws InterruptedException If there is any unhandled exceptions while sleeping
+     */
     public ServerWorker mafiaVote() throws IOException, InterruptedException {
+        // options
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
 
@@ -160,6 +204,7 @@ public class Voter {
 
         String voteBody = "Choose the citizen you want to shoot tonight";
 
+        // choosing voter
         ServerWorker voter = server.getWorkerHandler().findWorker(Group.Mafia, Type.GodFather);
         if (voter == null || voter.isDead()) {
             voter = server.getWorkerHandler().findWorker(Group.Mafia, Type.DrLector);
@@ -193,7 +238,19 @@ public class Voter {
     }
 
 
+    /**
+     * DrLector vote.
+     * Only can heal mafias.
+     * Can heal self only once.
+     * Can skip.
+     *
+     * @param canHealSelf whether he can heal himself
+     * @return mafia to heal
+     * @throws IOException          If there is any unhandled exceptions while sending/reading messages
+     * @throws InterruptedException If there is any unhandled exceptions while sleeping
+     */
     public ServerWorker lectorVote(boolean canHealSelf) throws IOException, InterruptedException {
+        // options
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
 
@@ -246,7 +303,19 @@ public class Voter {
     }
 
 
+    /**
+     * Doctor vote.
+     * Can heal both mafias or citizens.
+     * Can heal self only once.
+     * Can skip.
+     *
+     * @param canHealSelf whether he can heal himself
+     * @return player to heal
+     * @throws IOException          If there is any unhandled exceptions while sending/reading messages
+     * @throws InterruptedException If there is any unhandled exceptions while sleeping
+     */
     public ServerWorker doctorVote(boolean canHealSelf) throws IOException, InterruptedException {
+        // options
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
 
@@ -303,7 +372,16 @@ public class Voter {
     }
 
 
+    /**
+     * Inspector vote.
+     * Chooses someone to ask.
+     *
+     * @return the player he wants to inspect
+     * @throws IOException          If there is any unhandled exceptions while sending/reading messages
+     * @throws InterruptedException If there is any unhandled exceptions while sleeping
+     */
     public ServerWorker inspectorVote() throws IOException, InterruptedException {
+        // options
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
 
@@ -344,7 +422,18 @@ public class Voter {
     }
 
 
+    /**
+     * Sniper vote.
+     * Chooses one to snipe.
+     * If snipes a city, GameServer will kill him instead.
+     * Can skip.
+     *
+     * @return the player to snipe
+     * @throws IOException          If there is any unhandled exceptions while sending/reading messages
+     * @throws InterruptedException If there is any unhandled exceptions while sleeping
+     */
     public ServerWorker sniperVote() throws IOException, InterruptedException {
+        // options
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
 
@@ -389,7 +478,17 @@ public class Voter {
     }
 
 
+    /**
+     * Psycho vote.
+     * Chooses one to make mute for one day.
+     * Can skip.
+     *
+     * @return the player to make mute
+     * @throws IOException          If there is any unhandled exceptions while sending/reading messages
+     * @throws InterruptedException If there is any unhandled exceptions while sleeping
+     */
     public ServerWorker psychoVote() throws IOException, InterruptedException {
+        // options
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
 
@@ -433,6 +532,16 @@ public class Voter {
         }
     }
 
+
+    /**
+     * Strong vote.
+     * He can choose to get query of dead players.
+     * He can only get query twice.
+     *
+     * @return true, if he wants to get query
+     * @throws IOException          If there is any unhandled exceptions while sending/reading messages
+     * @throws InterruptedException If there is any unhandled exceptions while sleeping
+     */
     public boolean strongVote() throws IOException, InterruptedException {
 
         ServerWorker voter = server.getWorkerHandler().findWorker(Group.City, Type.Strong);
@@ -462,6 +571,12 @@ public class Voter {
 
     }
 
+
+    /**
+     * Checks whether everyone in voters list hase voted
+     * @param voters list of voters
+     * @return true, if all have voted
+     */
     private boolean hasAllVoted(ArrayList<ServerWorker> voters) {
         for (ServerWorker worker : voters)
             if (!worker.hasVoted())

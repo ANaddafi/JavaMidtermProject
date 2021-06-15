@@ -48,6 +48,9 @@ START
     client -> server    (through MSG)
     * ready to start game
 
+BREAK
+    ERR BREAK
+    * add a line break.
 
 EXIT
     EXIT
@@ -57,4 +60,4 @@ EXIT
 GAME_OVER
     GAME_OVER
     server -> client
-    tells client to exit the game
+    * tells client to exit the game
