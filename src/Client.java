@@ -9,20 +9,11 @@ public class Client {
     private static BufferedReader bufferedReader;
 
     private static String userName;
-
-    private static boolean isSleep;
-    private static boolean isDead;
-    private static boolean isMute;
-
     private static boolean isVoting;
-    private static boolean hasVoted;
 
     private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
-        isSleep = true;
-        isDead = false;
-        isMute = false;
 
         // asking for port
         int port = 8181;
@@ -30,7 +21,7 @@ public class Client {
         // TODO UNCOMMENT
         /*
         String line = null;
-        while(line == null || !isNumber(line)) {
+        while(!isNumber(line)) {
             System.out.print("Enter your game port: ");
             line = scanner.nextLine();
         }
@@ -76,46 +67,52 @@ public class Client {
                             if(cmd.equals(GameServer.GAME_OVER))
                                 exitGame();
 
-                            if (GameServer.SLEEP.equals(cmd)) {
-                                isSleep = true;
-                                System.err.println("# You're ASLEEP! You can't chat.");
+                            switch (cmd) {
+                                case GameServer.SLEEP:
+                                    System.err.println("# You're ASLEEP! You can't chat.");
 
-                            } else if (GameServer.WAKEUP.equals(cmd)) {
-                                isSleep = false;
-                                System.err.println("# You're AWAKE! You can chat.");
+                                    break;
+                                case GameServer.WAKEUP:
+                                    System.err.println("# You're AWAKE! You can chat.");
 
-                            } else if (GameServer.MSG.equals(cmd)) {
-                                showMsg(line);
+                                    break;
+                                case GameServer.MSG:
+                                    showMsg(line);
 
-                            } else if (GameServer.ERR.equals(cmd)) {
-                                if(isVoting)
-                                    handleVoteResponse(line);
-                                else if(line.split(" ", 2)[1].equals(GameServer.BREAK))
-                                    System.err.println();
-                                else
-                                    System.err.println("> " + line.split(" ", 2)[1]);
+                                    break;
+                                case GameServer.ERR:
+                                    if (isVoting)
+                                        handleVoteResponse(line);
+                                    else if (line.split(" ", 2)[1].equals(GameServer.BREAK))
+                                        System.err.println();
+                                    else
+                                        System.err.println("> " + line.split(" ", 2)[1]);
 
-                            } else if (GameServer.VOTE.equals(cmd)){
-                                handleVote(line);
+                                    break;
+                                case GameServer.VOTE:
+                                    handleVote(line);
 
-                            } else if (GameServer.TIMEOUT.equals(cmd)) {
-                                isVoting = false;
-                                hasVoted = false;
-                                System.out.println();
+                                    break;
+                                case GameServer.TIMEOUT:
+                                    isVoting = false;
+                                    System.out.println();
 
-                            } else if (GameServer.DEAD.equals(cmd)){
-                                isDead = true;
-                                System.err.println("\n>> You are DEAD!\nYou can still see other players chats,\nOr type 'EXIT' to exit the game.");
+                                    break;
+                                case GameServer.DEAD:
+                                    System.err.println("\n>> You are DEAD!\nYou can still see other players chats,\nOr type 'EXIT' to exit the game.");
 
-                            } else if (GameServer.MUTE.equals(cmd)){
-                                isMute = true;
-                                System.err.println("\n>> You are MUTE for today!");
+                                    break;
+                                case GameServer.MUTE:
+                                    System.err.println("\n>> You are MUTE for today!");
 
-                            } else if (GameServer.HISTORY.equals(cmd)){
-                                handleHistory(line);
+                                    break;
+                                case GameServer.HISTORY:
+                                    handleHistory(line);
 
-                            } else {
-                                System.out.println("!Unknown command <" + cmd + ">");
+                                    break;
+                                default:
+                                    System.out.println("!Unknown command <" + cmd + ">");
+                                    break;
                             }
                         }
                     }
@@ -207,7 +204,6 @@ public class Client {
         String body = line.split(" ", 2)[1];
         if("OK".equals(body)) {
             System.err.println("> Your vote is received!");
-            hasVoted = true;
         } else {
             System.err.println("> " + body);
         }
@@ -216,7 +212,6 @@ public class Client {
     // format: <VOTE> <body>::<options> <time>
     private static void handleVote(String line) {
         isVoting = true;
-        hasVoted = false;
         String[] tokens = line.split("::", 2);
         String[] options = tokens[1].split(" "); // last one is <time>
 

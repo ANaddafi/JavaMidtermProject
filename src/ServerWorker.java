@@ -13,7 +13,6 @@ class ServerWorker extends Thread{
     private int voteSize;
     private boolean hasVoted;
     private boolean isVoting;
-    private boolean recVote;
 
     private String userName; // surely just one word
     private Group group;
@@ -38,7 +37,6 @@ class ServerWorker extends Thread{
         isStart = false;
         isVoting = false;
         hasVoted = false;
-        recVote = false;
         theVote = 0;
     }
 
@@ -277,7 +275,6 @@ class ServerWorker extends Thread{
             return;
 
         String optionBody = "";
-        int cnt = 1;
         for(String workerUserName : options)
             optionBody += workerUserName + " ";
 
@@ -286,7 +283,6 @@ class ServerWorker extends Thread{
 
         isVoting = true;
         hasVoted = false;
-        recVote = false;
         theVote = 0;
         voteSize = options.size();
     }
@@ -308,7 +304,6 @@ class ServerWorker extends Thread{
             return;
 
         hasVoted = false;
-        recVote = false;
         isReady = false;
         isMute = false;
         goSleep();

@@ -9,8 +9,6 @@ public class Voter {
         this.server = server;
     }
 
-    // TODO INSTEAD OF findWorker, USE THE FIELDS
-
     public ServerWorker dayVote() throws InterruptedException, IOException {
         ArrayList<ServerWorker> options = new ArrayList<>();
         ArrayList<String> optionsString = new ArrayList<>();
@@ -77,7 +75,7 @@ public class Voter {
                 resultCount.replace(voted, resultCount.get(voted) + 1);
 
                 server.getWorkerHandler().msgToAllAwake(
-                        server.serverMsgFromString(worker.getUserName() + " voted to " + voted.getUserName())
+                        GameServer.serverMsgFromString(worker.getUserName() + " voted to " + voted.getUserName())
                         /*,worker*/
                 );
 
@@ -85,7 +83,7 @@ public class Voter {
 
                 skipped++;
                 server.getWorkerHandler().msgToAllAwake(
-                        server.serverMsgFromString(worker.getUserName() + " skipped voting")
+                        GameServer.serverMsgFromString(worker.getUserName() + " skipped voting")
                         /*,worker*/
                 );
             }
@@ -467,5 +465,3 @@ public class Voter {
         return true;
     }
 }
-
-    // TODO CAN WE HAVE TWO OR THREE TYPE OF VOTES? (DAY/MAFIA_NIGHT/CITY_NIGHT) GOOD!

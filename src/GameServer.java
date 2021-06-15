@@ -2,11 +2,9 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
-import java.util.stream.IntStream;
 
+// TODO JAVADOC
 // TODO USE FOLDERS(PACKAGE)!
 
 public class GameServer extends Thread{
@@ -45,7 +43,6 @@ public class GameServer extends Thread{
 
     private ServerWorker godFather;
     private ServerWorker drLector;
-    private ServerWorker ordMafia;
 
     private ServerWorker mayor;
     private ServerWorker doctor;
@@ -53,7 +50,6 @@ public class GameServer extends Thread{
     private ServerWorker sniper;
     private ServerWorker psycho;
     private ServerWorker strong;
-    private ServerWorker ordCity;
 
     private final StringBuilder chatHistory;
 
@@ -167,7 +163,6 @@ public class GameServer extends Thread{
     private void initRoles(){
         godFather = workers.findWorker(Group.Mafia, Type.GodFather);
         drLector = workers.findWorker(Group.Mafia, Type.DrLector);
-        ordMafia = workers.findWorker(Group.Mafia, Type.OrdMafia);
 
         mayor = workers.findWorker(Group.City, Type.Mayor);
         doctor = workers.findWorker(Group.City, Type.Doctor);
@@ -175,7 +170,6 @@ public class GameServer extends Thread{
         sniper = workers.findWorker(Group.City, Type.Sniper);
         psycho = workers.findWorker(Group.City, Type.Psycho);
         strong = workers.findWorker(Group.City, Type.Strong);
-        ordCity = workers.findWorker(Group.City, Type.OrdCity);
     }
 
 
@@ -224,7 +218,6 @@ public class GameServer extends Thread{
 
         }
 
-        // TODO TELL PLAYERS ABOUT THE RESULTS!
         System.err.println("\nGAME IS FINISHED!\n");
 
         if(workers.mafiaCount() == 0){ // CITY WINS!
@@ -238,7 +231,6 @@ public class GameServer extends Thread{
         } else {
             System.err.println("UNKNOWN REASON OF GAME FINISH!");
         }
-        // TODO EXIT FOR THEM!
 
     }
 

@@ -84,12 +84,6 @@ class WorkerHandler {
                 worker.wakeUp(); // dead is handled in 'wakeUp' method
     }
 
-    public void wakeUpType(Group group, Type type) throws IOException {
-        ServerWorker worker = findWorker(group, type);
-        if(worker != null)
-            worker.wakeUp(); // dead is handled in 'wakeUp' method
-    }
-
     public void wakeUpWorker(ServerWorker worker) throws IOException {
         worker.wakeUp();
     }
@@ -97,10 +91,6 @@ class WorkerHandler {
     public void sleepList(ArrayList<ServerWorker> sleepList) throws IOException {
         for(ServerWorker worker : sleepList)
                 worker.nightReset(); // dead is handled in 'nightReset' method
-    }
-
-    public void sleepType(Group group, Type type) throws IOException {
-        findWorker(group, type).nightReset(); // dead is handled in 'wakeUp' method
     }
 
     public void sleepWorker(ServerWorker worker) throws IOException {
@@ -128,6 +118,12 @@ class WorkerHandler {
                 return worker;
 
         return null;
+    }
+
+    public void lineBreakAll() throws IOException {
+        for(ServerWorker worker : workers)
+            if(!worker.isSleep() && worker.isOnline())
+                worker.lineBreak();
     }
 
     public void msgToAllAwake(String toSend) throws IOException {
@@ -168,7 +164,7 @@ class WorkerHandler {
         );
         msgToAllAwake(GameServer.serverMsgFromString("-------------------"));
 
-        // TODO LINEBREAK HERE
+        lineBreakAll();
     }
 
     public void finishGame(Group winnerGroup) throws IOException {
