@@ -1,3 +1,7 @@
+package Client;
+
+import Server.GameServer;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
@@ -99,7 +103,8 @@ public class Client {
 
                                     break;
                                 case GameServer.DEAD:
-                                    System.err.println("\n>> You are DEAD!\nYou can still see other players chats,\nOr type 'EXIT' to exit the game.");
+                                    System.err.println("\n>> You are DEAD!\nYou can still see other players chats," +
+                                                                "\nOr type 'EXIT' to exit the game.");
 
                                     break;
                                 case GameServer.MUTE:

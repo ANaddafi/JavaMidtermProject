@@ -1,3 +1,8 @@
+package Server;
+
+import Enums.Group;
+import Enums.Type;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;

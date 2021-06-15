@@ -1,3 +1,8 @@
+package Server;
+
+import Enums.Group;
+import Enums.Type;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
