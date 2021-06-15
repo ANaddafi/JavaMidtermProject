@@ -40,11 +40,21 @@ class WorkerHandler {
     }
 
     public int mafiaCount(){
-        return getMafias().size();
+        int mafias = 0;
+        for(ServerWorker worker : getMafias())
+            if(worker.isOnline() && !worker.isDead())
+                mafias++;
+
+        return mafias;
     }
 
     public int cityCount(){
-        return getCity().size();
+        int cities = 0;
+        for(ServerWorker worker : getCity())
+            if(worker.isOnline() && !worker.isDead())
+                cities++;
+
+        return cities;
     }
 
     public boolean allLoggedIn() {
@@ -66,7 +76,7 @@ class WorkerHandler {
 
     public void wakeUpAll() throws IOException {
         for(ServerWorker worker : workers)
-                worker.wakeUp(); // dead is handled in 'wakeUp' method
+                    worker.wakeUp(); // dead is handled in 'wakeUp' method
     }
 
     public void wakeUpList(ArrayList<ServerWorker> wakeUpList) throws IOException {
@@ -75,7 +85,9 @@ class WorkerHandler {
     }
 
     public void wakeUpType(Group group, Type type) throws IOException {
-        findWorker(group, type).wakeUp(); // dead is handled in 'wakeUp' method
+        ServerWorker worker = findWorker(group, type);
+        if(worker != null)
+            worker.wakeUp(); // dead is handled in 'wakeUp' method
     }
 
     public void wakeUpWorker(ServerWorker worker) throws IOException {
@@ -157,5 +169,30 @@ class WorkerHandler {
         msgToAllAwake(GameServer.serverMsgFromString("-------------------"));
 
         // TODO LINEBREAK HERE
+    }
+
+    public void finishGame(Group winnerGroup) throws IOException {
+        for(ServerWorker worker : workers)
+            if(worker.isOnline()){
+                // notify them
+                worker.lineBreak();
+                worker.sendErr("Game is Finished!");
+                worker.lineBreak();
+
+                String winner = winnerGroup == Group.City ? "City" : "Mafia";
+                String loser = winnerGroup == Group.City ? "Mafia" : "City";
+
+                if(worker.getGroup() == winnerGroup)
+                    worker.sendErr("Congrats! " + winner + " won!");
+                else
+                    worker.sendErr("Oops! " + loser + " lost!");
+
+                worker.lineBreak();
+
+
+                // close game
+                worker.closeGame();
+            }
+
     }
 }

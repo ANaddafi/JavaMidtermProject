@@ -53,3 +53,8 @@ EXIT
     EXIT
     client -> server
     * exit the game
+
+GAME_OVER
+    GAME_OVER
+    server -> client
+    tells client to exit the game

@@ -196,7 +196,7 @@ class ServerWorker extends Thread{
         return isNum;
     }
 
-    private void sendErr(String error) throws IOException {
+    public void sendErr(String error) throws IOException {
         if(!isOnline)
             return;
 
@@ -336,8 +336,18 @@ class ServerWorker extends Thread{
         if(!isOnline)
             return;
 
-        sendErr(GameServer.BREAK); // sends line break
+        lineBreak(); // sends line break
         sendErr("Now it's " + time);
-        sendErr(GameServer.BREAK);
+        lineBreak();
+    }
+
+    public void lineBreak() throws IOException {
+        if(isOnline)
+            sendErr(GameServer.BREAK);
+    }
+
+    public void closeGame() throws IOException {
+        outputStream.write((GameServer.GAME_OVER+"\n").getBytes());
+        isOnline = false;
     }
 }

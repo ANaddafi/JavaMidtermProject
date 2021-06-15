@@ -73,6 +73,9 @@ public class Client {
                         if (tokens.length > 0) {
                             String cmd = tokens[0];
 
+                            if(cmd.equals(GameServer.GAME_OVER))
+                                exitGame();
+
                             if (GameServer.SLEEP.equals(cmd)) {
                                 isSleep = true;
                                 System.err.println("# You're ASLEEP! You can't chat.");

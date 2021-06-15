@@ -24,6 +24,7 @@ public class GameServer extends Thread{
     public static final String START = "START";
     public static final String HISTORY = "HISTORY";
     public static final String EXIT = "EXIT";
+    public static final String GAME_OVER = "GAME_OVER";
     public static final String BREAK = "LINEBREAK";
 
 
@@ -61,7 +62,7 @@ public class GameServer extends Thread{
     public int strongQuery;
     public int strongSurvived;
 
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
 
 
     private final int port;
@@ -149,12 +150,12 @@ public class GameServer extends Thread{
         Collections.shuffle(index);
 
         workers.getWorkers().get(index.get(0)).giveRole(Group.Mafia, Type.GodFather);
-        workers.getWorkers().get(index.get(1)).giveRole(Group.Mafia, Type.DrLector);
-        workers.getWorkers().get(index.get(2)).giveRole(Group.Mafia, Type.OrdMafia);
-
-//         workers.getWorkers().get(index.get(3)).giveRole(Group.City, Type.Mayor);
+//        workers.getWorkers().get(index.get(1)).giveRole(Group.Mafia, Type.DrLector);
+//        workers.getWorkers().get(index.get(2)).giveRole(Group.Mafia, Type.OrdMafia);
+//
+         workers.getWorkers().get(index.get(1)).giveRole(Group.City, Type.Mayor);
 //         workers.getWorkers().get(index.get(4)).giveRole(Group.City, Type.Psycho);
-//         workers.getWorkers().get(index.get(5)).giveRole(Group.City, Type.Doctor);
+         workers.getWorkers().get(index.get(2)).giveRole(Group.City, Type.Doctor);
 //         workers.getWorkers().get(index.get(6)).giveRole(Group.City, Type.Inspector);
 //         workers.getWorkers().get(index.get(7)).giveRole(Group.City, Type.Sniper);
 //         workers.getWorkers().get(index.get(8)).giveRole(Group.City, Type.Strong);
@@ -163,7 +164,7 @@ public class GameServer extends Thread{
         return true;
     }
 
-    public void initRoles(){
+    private void initRoles(){
         godFather = workers.findWorker(Group.Mafia, Type.GodFather);
         drLector = workers.findWorker(Group.Mafia, Type.DrLector);
         ordMafia = workers.findWorker(Group.Mafia, Type.OrdMafia);
@@ -225,7 +226,18 @@ public class GameServer extends Thread{
 
         // TODO TELL PLAYERS ABOUT THE RESULTS!
         System.err.println("\nGAME IS FINISHED!\n");
-        workers.msgToAll(serverMsgFromString("GAME IS FINISHED!"));
+
+        if(workers.mafiaCount() == 0){ // CITY WINS!
+            System.err.println("CITY WINS!");
+            workers.finishGame(Group.City);
+
+        } else if(workers.cityCount() <= workers.mafiaCount()){ // MAFIA WINS!
+            System.err.println("MAFIA WINS!");
+            workers.finishGame(Group.Mafia);
+
+        } else {
+            System.err.println("UNKNOWN REASON OF GAME FINISH!");
+        }
         // TODO EXIT FOR THEM!
 
     }
@@ -524,7 +536,6 @@ public class GameServer extends Thread{
 
 
     private boolean gameIsFinished() {
-        // TODO CHECK ONLINE WORKERS
         return workers.mafiaCount() == 0 || workers.mafiaCount() >= workers.cityCount();
     }
 
